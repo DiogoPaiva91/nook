@@ -1,0 +1,34 @@
+name: Greenfield
+description: Projeto novo do zero - ciclo completo
+steps:
+  - agent: analyst
+    input: briefing do usuario
+    output: docs/brief.md
+    approval: required
+
+  - agent: pm
+    input: docs/brief.md
+    output: docs/prd.md
+    approval: required
+
+  - agent: architect
+    input: docs/prd.md
+    output: docs/architecture.md
+    approval: required
+
+  - agent: sm
+    input: docs/prd.md + docs/architecture.md
+    output: docs/stories/*.md
+    approval: required (usuario seleciona quais implementar)
+
+  - agent: dev
+    input: story selecionada + codigo
+    output: codigo editado
+    approval: required (diff review por edicao)
+    repeat: para cada story selecionada
+
+  - agent: qa
+    input: story implementada + codigo
+    output: docs/qa/*.md
+    approval: auto (apenas reporta)
+    repeat: apos cada dev

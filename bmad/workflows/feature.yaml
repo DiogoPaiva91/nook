@@ -1,0 +1,12 @@
+name: Feature
+description: Implementar feature unica - direto ao dev
+steps:
+  - agent: dev
+    input: descricao da feature + codigo
+    output: codigo editado
+    approval: required
+
+  - agent: qa
+    input: feature implementada
+    output: docs/qa/feature-*.md
+    approval: auto

@@ -1,0 +1,27 @@
+# deps
+node_modules/
+
+# runtime data (backup separado via tar)
+data/
+uploads/
+
+# env / secrets
+.env
+.env.local
+*.key
+*.pem
+secrets/
+credentials/
+
+# logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# build / cache
+dist/
+build/
+.cache/
