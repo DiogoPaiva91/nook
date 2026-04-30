@@ -1446,8 +1446,11 @@
           <button onclick="setPreviewBreakpoint('tablet')" id="bpTablet" title="Tablet (768px)" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">&#128250; 768</button>
           <button onclick="setPreviewBreakpoint('desktop')" id="bpDesktop" title="Desktop (100%)" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">&#128187; 100%</button>
           <button id="previewModeBtn" onclick="togglePreviewMode()" title="Alternar entre Dev (npm run dev) e Estatico (HTML)" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 8px;border-radius:4px;cursor:pointer;font-size:11px">Estatico</button>
-          <input id="previewEntry" type="text" placeholder="index.html" onkeydown="if(event.key==='Enter')reloadPreview()" style="flex:1;min-width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px">
+          <button id="previewBackBtn" onclick="previewNavBack()" title="Voltar (history do navegador)" disabled style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;display:none;opacity:0.45">&#8592;</button>
+          <button id="previewFwdBtn" onclick="previewNavForward()" title="Avancar" disabled style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;display:none;opacity:0.45">&#8594;</button>
+          <input id="previewEntry" type="text" placeholder="index.html" onkeydown="handlePreviewBarKey(event)" onfocus="handlePreviewBarFocus(event)" style="flex:1;min-width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px">
           <button onclick="reloadPreview()" title="Recarregar" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">&#x21bb;</button>
+          <button id="previewReadUrlBtn" onclick="previewReadIframeUrl()" title="Ler URL atual do iframe (so funciona se mesma origem)" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px;display:none">&#128205;</button>
           <button onclick="openPreviewInNewTab()" title="Abrir em nova aba" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:4px 8px;border-radius:4px;cursor:pointer;font-size:11px">&#8599;</button>
         </div>
         <div id="previewErrorBanner" style="display:none;background:#7f1d1d;border-bottom:1px solid #ef4444;color:#fecaca;padding:8px 12px;font-size:11px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openDevServerLogs()">
@@ -4649,9 +4652,18 @@ function renderDevServerUI() {
   if (prev && prev.style.display !== "none" && devServerState.running && devServerState.url) {
     if (typeof reloadPreview === "function" && getPreviewState().mode === "dev") {
       const iframe = document.getElementById("previewFrame");
-      if (iframe && iframe.dataset.devUrl !== devServerState.url) reloadPreview();
+      if (iframe && iframe.dataset.devUrl !== devServerState.url) {
+        // Port migrated (5173 → 5174 etc) — re-seed nav stack at new origin
+        if (typeof _previewNavStack !== "undefined") {
+          const seed = devUrlWithPath(devServerState.url, getProjectPreviewPath());
+          _previewNavStack = [seed];
+          _previewNavIdx = 0;
+        }
+        reloadPreview();
+      }
     }
   }
+  if (typeof updatePreviewBarUI === "function") updatePreviewBarUI();
 }
 
 function dismissPreviewError() {
@@ -7846,7 +7858,17 @@ function initPreviewPane() {
   if (entry && document.activeElement !== entry) entry.value = st.entry || "index.html";
   applyBreakpointStyle(st.breakpoint || "desktop");
   applyPreviewModeStyle(st.mode || "static");
+  // Seed nav stack with current dev URL+saved path (so back/forward starts fresh per session)
+  if (isDevModeRunning()) {
+    const seed = devUrlWithPath(devServerState.url, getProjectPreviewPath());
+    _previewNavStack = [seed];
+    _previewNavIdx = 0;
+  } else {
+    _previewNavStack = [];
+    _previewNavIdx = -1;
+  }
   reloadPreview();
+  if (typeof updatePreviewBarUI === "function") updatePreviewBarUI();
   maybeAutoStartDevServer();
 }
 
@@ -7906,7 +7928,7 @@ function applyPreviewModeStyle(mode) {
     btn.style.background = "#22c55e";
     btn.style.borderColor = "#22c55e";
     btn.style.color = "white";
-    if (entry) entry.disabled = true;
+    if (entry) entry.disabled = false;
   } else {
     btn.textContent = "Estatico";
     btn.style.background = "var(--surface2)";
@@ -7914,6 +7936,7 @@ function applyPreviewModeStyle(mode) {
     btn.style.color = "var(--text)";
     if (entry) entry.disabled = false;
   }
+  if (typeof updatePreviewBarUI === "function") updatePreviewBarUI();
 }
 
 function togglePreviewMode() {
@@ -7925,7 +7948,17 @@ function togglePreviewMode() {
     maybeAutoStartDevServer();
     return;
   }
+  // Re-seed nav stack on mode change
+  if (next === "dev" && isDevModeRunning()) {
+    const seed = devUrlWithPath(devServerState.url, getProjectPreviewPath());
+    _previewNavStack = [seed];
+    _previewNavIdx = 0;
+  } else {
+    _previewNavStack = [];
+    _previewNavIdx = -1;
+  }
   reloadPreview();
+  if (typeof updatePreviewBarUI === "function") updatePreviewBarUI();
 }
 
 function applyBreakpointStyle(bp) {
@@ -7963,10 +7996,14 @@ function reloadPreview() {
   const st = getPreviewState();
   // Dev mode: load running dev server URL when available
   if (st.mode === "dev" && devServerState && devServerState.running && devServerState.url) {
+    // Respect current stack entry (user may have navigated to /sobre etc).
+    const path = getProjectPreviewPath();
+    const target = devUrlWithPath(devServerState.url, path);
     iframe.removeAttribute("srcdoc");
-    iframe.src = devServerState.url + "?_=" + Date.now();
+    iframe.src = target + (target.includes("?") ? "&" : "?") + "_=" + Date.now();
     iframe.dataset.devUrl = devServerState.url;
-    if (status) status.textContent = "Dev: " + devServerState.url + "  (HMR ativo via Vite — edite e veja na hora)";
+    if (status) status.textContent = "Dev: " + target + "  (HMR ativo via Vite — edite e veja na hora)";
+    if (typeof updatePreviewBarUI === "function") updatePreviewBarUI();
     return;
   }
   const entryEl = document.getElementById("previewEntry");
@@ -7981,11 +8018,212 @@ function reloadPreview() {
 }
 
 function openPreviewInNewTab() {
+  const st = getPreviewState();
+  if (st.mode === "dev" && devServerState && devServerState.running && devServerState.url) {
+    const path = getProjectPreviewPath();
+    window.open(devUrlWithPath(devServerState.url, path), "_blank");
+    return;
+  }
   const entryEl = document.getElementById("previewEntry");
   let entry = (entryEl ? entryEl.value : "").trim() || "index.html";
   const proj = projectKey();
   const url = "/preview/" + encodeURIComponent(proj) + "/" + entry.split("/").map(encodeURIComponent).join("/");
   window.open(url, "_blank");
+}
+
+// ── Preview URL bar: navegacao tipo browser (back/forward, Enter, Esc) ──
+let _previewNavStack = [];
+let _previewNavIdx = -1;
+
+const PREVIEW_PATH_KEY = "jarvis.previewPath";
+function getProjectPreviewPath() {
+  try {
+    const all = JSON.parse(localStorage.getItem(PREVIEW_PATH_KEY) || "{}");
+    return all[projectKey()] || "/";
+  } catch { return "/"; }
+}
+function setProjectPreviewPath(path) {
+  try {
+    const all = JSON.parse(localStorage.getItem(PREVIEW_PATH_KEY) || "{}");
+    all[projectKey()] = path || "/";
+    localStorage.setItem(PREVIEW_PATH_KEY, JSON.stringify(all));
+  } catch {}
+}
+function devUrlWithPath(base, path) {
+  if (!base) return path || "/";
+  // Normalize: base no trailing slash, path leading slash
+  const b = base.replace(/\/+$/, "");
+  let p = path || "/";
+  if (!p.startsWith("/")) p = "/" + p;
+  return b + p;
+}
+function isDevModeRunning() {
+  const st = getPreviewState();
+  return st.mode === "dev" && !!(devServerState && devServerState.running && devServerState.url);
+}
+
+function updatePreviewBarUI() {
+  const input = document.getElementById("previewEntry");
+  const back  = document.getElementById("previewBackBtn");
+  const fwd   = document.getElementById("previewFwdBtn");
+  const read  = document.getElementById("previewReadUrlBtn");
+  if (!input) return;
+  if (isDevModeRunning()) {
+    if (back) back.style.display = "";
+    if (fwd)  fwd.style.display  = "";
+    if (read) read.style.display = "";
+    input.placeholder = "http://localhost:" + (devServerState.port || "5173") + "/";
+    // Don't overwrite while user is typing
+    if (document.activeElement !== input) {
+      input.value = devUrlWithPath(devServerState.url, getProjectPreviewPath());
+    }
+  } else {
+    if (back) back.style.display = "none";
+    if (fwd)  fwd.style.display  = "none";
+    if (read) read.style.display = "none";
+    input.placeholder = "index.html";
+    if (document.activeElement !== input) {
+      const st = getPreviewState();
+      input.value = (st && st.entry) || "index.html";
+    }
+  }
+  // Back/forward enabled state
+  const canBack = _previewNavIdx > 0;
+  const canFwd  = _previewNavIdx >= 0 && _previewNavIdx < _previewNavStack.length - 1;
+  if (back) { back.disabled = !canBack; back.style.opacity = canBack ? "1" : "0.45"; back.style.cursor = canBack ? "pointer" : "default"; }
+  if (fwd)  { fwd.disabled  = !canFwd;  fwd.style.opacity  = canFwd  ? "1" : "0.45"; fwd.style.cursor  = canFwd  ? "pointer" : "default"; }
+}
+
+function _previewLoadIframeUrl(fullUrl) {
+  const iframe = document.getElementById("previewFrame");
+  const status = document.getElementById("previewStatus");
+  if (!iframe) return;
+  iframe.removeAttribute("srcdoc");
+  iframe.src = fullUrl + (fullUrl.includes("?") ? "&" : "?") + "_=" + Date.now();
+  if (devServerState && devServerState.url && fullUrl.startsWith(devServerState.url.replace(/\/+$/, ""))) {
+    iframe.dataset.devUrl = devServerState.url;
+    if (status) status.textContent = "Dev: " + fullUrl + "  (HMR ativo)";
+  }
+}
+
+function _previewPushNav(fullUrl) {
+  // Drop forward history when navigating from middle of stack
+  if (_previewNavIdx < _previewNavStack.length - 1) {
+    _previewNavStack = _previewNavStack.slice(0, _previewNavIdx + 1);
+  }
+  // Avoid duplicate consecutive entries
+  if (_previewNavStack[_previewNavStack.length - 1] !== fullUrl) {
+    _previewNavStack.push(fullUrl);
+    _previewNavIdx = _previewNavStack.length - 1;
+  }
+}
+
+function previewNavigateTo(rawInput) {
+  const input = (rawInput == null ? "" : String(rawInput)).trim();
+  const st = getPreviewState();
+  // Static mode: defer to reloadPreview (treats input as entry path)
+  if (st.mode !== "dev" || !isDevModeRunning()) {
+    reloadPreview();
+    return;
+  }
+  let target;
+  if (/^https?:\/\//i.test(input)) {
+    target = input;
+  } else if (/^localhost(:\d+)?(\/|$)/i.test(input) || /^127\.0\.0\.1(:\d+)?(\/|$)/i.test(input)) {
+    target = "http://" + input;
+  } else if (input === "" || input === "/") {
+    target = devUrlWithPath(devServerState.url, "/");
+  } else {
+    target = devUrlWithPath(devServerState.url, input);
+  }
+  // Persist path portion if same dev origin
+  try {
+    const u = new URL(target);
+    const baseU = new URL(devServerState.url);
+    if (u.origin === baseU.origin) {
+      setProjectPreviewPath(u.pathname + u.search + u.hash);
+    }
+  } catch {}
+  _previewPushNav(target);
+  _previewLoadIframeUrl(target);
+  // Reflect normalized URL in input
+  const inputEl = document.getElementById("previewEntry");
+  if (inputEl) inputEl.value = target;
+  updatePreviewBarUI();
+}
+
+function previewNavBack() {
+  if (_previewNavIdx <= 0) return;
+  _previewNavIdx--;
+  const url = _previewNavStack[_previewNavIdx];
+  _previewLoadIframeUrl(url);
+  const inputEl = document.getElementById("previewEntry");
+  if (inputEl) inputEl.value = url;
+  try {
+    const u = new URL(url);
+    const baseU = new URL(devServerState.url);
+    if (u.origin === baseU.origin) setProjectPreviewPath(u.pathname + u.search + u.hash);
+  } catch {}
+  updatePreviewBarUI();
+}
+
+function previewNavForward() {
+  if (_previewNavIdx >= _previewNavStack.length - 1) return;
+  _previewNavIdx++;
+  const url = _previewNavStack[_previewNavIdx];
+  _previewLoadIframeUrl(url);
+  const inputEl = document.getElementById("previewEntry");
+  if (inputEl) inputEl.value = url;
+  try {
+    const u = new URL(url);
+    const baseU = new URL(devServerState.url);
+    if (u.origin === baseU.origin) setProjectPreviewPath(u.pathname + u.search + u.hash);
+  } catch {}
+  updatePreviewBarUI();
+}
+
+function previewReadIframeUrl() {
+  // Cross-origin will throw — silent fallback (only works when iframe shares origin).
+  const iframe = document.getElementById("previewFrame");
+  if (!iframe) return;
+  let href = null;
+  try { href = iframe.contentWindow && iframe.contentWindow.location && iframe.contentWindow.location.href; } catch {}
+  if (!href || href === "about:blank") {
+    // Silent — limitação cross-origin esperada com Vite/Next em outra porta
+    return;
+  }
+  // Strip our cache-bust param if we appended one previously
+  const cleaned = href.replace(/([?&])_=\d+(&|$)/, (m, a, b) => b === "&" ? a : "");
+  const finalUrl = cleaned.replace(/[?&]$/, "");
+  _previewPushNav(finalUrl);
+  const inputEl = document.getElementById("previewEntry");
+  if (inputEl) inputEl.value = finalUrl;
+  try {
+    const u = new URL(finalUrl);
+    const baseU = new URL(devServerState.url);
+    if (u.origin === baseU.origin) setProjectPreviewPath(u.pathname + u.search + u.hash);
+  } catch {}
+  updatePreviewBarUI();
+}
+
+function handlePreviewBarKey(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    const v = event.target.value;
+    previewNavigateTo(v);
+    event.target.blur();
+  } else if (event.key === "Escape") {
+    event.preventDefault();
+    const orig = event.target.dataset.original;
+    if (orig != null) event.target.value = orig;
+    event.target.blur();
+  }
+}
+
+function handlePreviewBarFocus(event) {
+  event.target.dataset.original = event.target.value;
+  // Chrome-style: select all on focus
+  setTimeout(() => { try { event.target.select(); } catch {} }, 0);
 }
 
 // Hotkey R reloads preview when preview pane is visible
