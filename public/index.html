@@ -4672,11 +4672,19 @@ function renderDevServerUI() {
     }
   }
   // Pulse + tooltip on the central Preview button to advertise the live app.
-  // Active when dev is running AND the user is currently viewing the editor.
+  // Active when dev is running AND the preview pane isn't currently overlaid
+  // on the editor area. We derive from the DOM (not the _codeCenterCurrentView
+  // variable) because the variable can drift if setCodeCenterView throws
+  // mid-flow — DOM is the source of truth.
   const previewBtn = document.getElementById("centerViewPreviewBtn");
+  const previewPane = document.getElementById("codePreviewPanel");
   if (previewBtn) {
-    const inEditorView = (typeof _codeCenterCurrentView === "undefined") || _codeCenterCurrentView !== "preview";
-    if (devServerState.running && inEditorView) {
+    const previewVisible = !!(previewPane && previewPane.style.display === "flex" && previewPane.style.position === "absolute");
+    // Re-sync the variable so other callers see consistent state.
+    if (typeof _codeCenterCurrentView !== "undefined") {
+      _codeCenterCurrentView = previewVisible ? "preview" : "editor";
+    }
+    if (devServerState.running && !previewVisible) {
       previewBtn.classList.add("center-preview-live");
       previewBtn.title = "Ver app rodando" + (devServerState.port ? " em :" + devServerState.port : "");
     } else {
@@ -7624,7 +7632,10 @@ async function openFile(filePath) {
     activateTab(filePath);
     // First-open of a Vite/React entry file with dev running → show the live app,
     // not the static HTML/main.tsx source. Source is one click away on Editor toggle.
-    if (isProjectEntryFile(filePath) && typeof isDevModeRunning === "function" && isDevModeRunning()) {
+    // Note: we check devServerState directly (not isDevModeRunning) because
+    // isDevModeRunning requires st.mode === "dev" which may not be set yet —
+    // that's circular. We force mode here.
+    if (isProjectEntryFile(filePath) && devServerState && devServerState.running && devServerState.url) {
       try { setPreviewState({ mode: "dev" }); } catch {}
       try { setCodeCenterView("preview"); } catch {}
     }
@@ -7673,8 +7684,9 @@ async function openFileFromAgent(filePath) {
   renderEditor();
   // Same auto-switch policy as manual openFile: only on FIRST open of an entry
   // file with dev running. If the agent edits index.html later, HMR already
-  // reflects the change in the existing Preview pane.
-  if (isNew && isProjectEntryFile(filePath) && typeof isDevModeRunning === "function" && isDevModeRunning()) {
+  // reflects the change in the existing Preview pane. Direct devServerState
+  // check (not isDevModeRunning) — see openFile note.
+  if (isNew && isProjectEntryFile(filePath) && devServerState && devServerState.running && devServerState.url) {
     try { setPreviewState({ mode: "dev" }); } catch {}
     try { setCodeCenterView("preview"); } catch {}
   }
