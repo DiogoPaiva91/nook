@@ -579,6 +579,13 @@
     }
     .code-tab:hover .code-tab-close { opacity: 0.6; }
     .code-tab-close:hover { opacity: 1; color: #ef4444; }
+    @keyframes code-tab-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(168,85,247,0.55); background: rgba(168,85,247,0.18); }
+      60%  { box-shadow: 0 0 14px 2px rgba(168,85,247,0.45); background: rgba(168,85,247,0.10); }
+      100% { box-shadow: 0 0 0 0 rgba(168,85,247,0); background: transparent; }
+    }
+    .code-tab.just-edited { animation: code-tab-pulse 1.4s ease-out; }
+    .code-tab.streaming   { animation: code-tab-pulse 1.2s ease-in-out infinite; }
 
     /* ── File Tree (Cursor-like) ── */
     .tree-toolbar { display: flex; gap: 2px; }
@@ -4526,11 +4533,30 @@ let devServerState = { running: false, url: null, port: null };
 let devServerPollTimer = null;
 
 async function refreshDevServerState() {
+  const wasRunning = !!(devServerState && devServerState.running);
+  const wasUrl = devServerState && devServerState.url;
   try {
     const r = await fetch("/api/devserver/status?path=" + encodeURIComponent(PROJECT_ROOT));
     const d = await r.json();
     devServerState = d || { running: false };
   } catch { devServerState = { running: false }; }
+  // Transition false→true with URL ready: offer Preview switch (toast).
+  // Skip if center already showing preview, or if not in code mode.
+  const justBecameReady = !wasRunning && devServerState.running && devServerState.url;
+  const justGotUrl      = wasRunning && !wasUrl && devServerState.url; // running but URL came later
+  if ((justBecameReady || justGotUrl) && typeof showToast === "function") {
+    const codeMode = document.getElementById("mode-code");
+    const inCode = codeMode && codeMode.style.display !== "none";
+    const alreadyPreview = (typeof _codeCenterCurrentView !== "undefined") && _codeCenterCurrentView === "preview";
+    if (inCode && !alreadyPreview) {
+      const port = devServerState.port || "";
+      showToast("Dev server pronto" + (port ? " em :" + port : "") + " — clique pra abrir Preview", {
+        kind: "info",
+        duration: 6000,
+        onClick: () => { try { setCodeCenterView("preview"); } catch {} },
+      });
+    }
+  }
   renderDevServerUI();
 }
 
@@ -7487,6 +7513,48 @@ async function openFile(filePath) {
   } catch {}
 }
 
+// Auto-open driven by the agent (Write/Edit tool result). Differs from openFile:
+//   - Forces Preview for newly opened .md tabs (respects user choice if tab already exists).
+//   - Refetches file content even if tab existed (agent just modified it).
+//   - Triggers pulse animation on the tab.
+//   - Skips when not in code mode (avoids surprising mode switches).
+async function openFileFromAgent(filePath) {
+  if (!filePath) return;
+  const codeMode = document.getElementById("mode-code");
+  if (!codeMode || codeMode.style.display === "none") return;
+  if (typeof PROJECT_ROOT === "string" && !filePath.startsWith(PROJECT_ROOT)) return;
+  const existing = codeTabs.find(t => t.path === filePath);
+  const isNew = !existing;
+  let tab = existing;
+  try {
+    const res = await fetch("/api/file-content?path=" + encodeURIComponent(filePath));
+    const data = await res.json();
+    if (isNew) {
+      const name = filePath.split("/").pop();
+      tab = { path: filePath, name, content: data.content || "" };
+      const ext = (name.split(".").pop() || "").toLowerCase();
+      if (ext === "md") tab.previewMode = true;
+      codeTabs.push(tab);
+    } else {
+      // Refresh content so editor shows the agent's edit, but don't override
+      // user's manual unsaved changes (dirty=true → skip).
+      if (!tab.dirty) tab.content = data.content || "";
+    }
+  } catch {
+    if (isNew) return;
+  }
+  activeTabPath = filePath;
+  if (tab) {
+    tab.justEdited = true;
+    setTimeout(() => {
+      const t = codeTabs.find(x => x.path === filePath);
+      if (t) { t.justEdited = false; renderTabs(); }
+    }, 1500);
+  }
+  renderTabs();
+  renderEditor();
+}
+
 function activateTab(filePath) {
   activeTabPath = filePath;
   renderTabs();
@@ -7511,7 +7579,11 @@ function renderTabs() {
   const container = document.getElementById("codeTabs");
   if (!codeTabs.length) { container.innerHTML = '<div style="padding:8px 16px;font-size:12px;color:var(--text-dim)">Nenhum arquivo aberto</div>'; return; }
   container.innerHTML = codeTabs.map(t => {
-    return '<div class="code-tab' + (t.path === activeTabPath ? " active" : "") + '" onclick="activateTab(\'' + escAttr(t.path) + '\')">'
+    const cls = "code-tab"
+      + (t.path === activeTabPath ? " active" : "")
+      + (t.streaming ? " streaming" : "")
+      + (t.justEdited ? " just-edited" : "");
+    return '<div class="' + cls + '" onclick="activateTab(\'' + escAttr(t.path) + '\')">'
       + (t.dirty ? '<span style="color:#eab308" title="Não salvo">●</span> ' : '')
       + escapeHtml(t.name).replace(/<br>/g,"")
       + ' <span class="code-tab-close" onclick="closeTab(\'' + escAttr(t.path) + '\',event)">&times;</span></div>';
@@ -9068,7 +9140,13 @@ function initCodeChatPanel() {
     placeholder: "Pergunte sobre o projeto ou peça alterações",
     inputPlaceholder: "Pergunte sobre o código...",
     systemPromptFn: function() {
-      let s = "Você é o Jarvis Código, operando no projeto em " + PROJECT_ROOT + ".\nFerramentas disponíveis: Read, Edit, Write, Bash, Grep, Glob.\n";
+      let s = "Você é o Jarvis Código, operando no projeto em " + PROJECT_ROOT + ".\nFerramentas disponíveis: Read, Edit, Write, Bash, Grep, Glob.\n"
+        + "\nINTEGRAÇÃO COM A UI DO HUB:\n"
+        + "- Ao usar Write ou Edit, o painel central abre AUTOMATICAMENTE o arquivo modificado e dá foco. Você não precisa pedir ao usuário pra abrir manualmente.\n"
+        + "- Arquivos .md abrem em aba Preview (markdown renderizado); .ts/.tsx/.js/.jsx/.css/.html etc. abrem em aba Source com syntax highlight.\n"
+        + "- Durante a execução do Write/Edit, a aba do arquivo pulsa (highlight roxo) pra sinalizar 'editando ao vivo'.\n"
+        + "- Se você rodar um servidor de desenvolvimento (`npm run dev`, `pnpm dev`, etc.) e ele subir com sucesso, aparece um toast clicável 'Dev server pronto — abrir Preview' que troca o painel central pro Preview Web (Vite/HMR).\n"
+        + "- Trabalhe normalmente; o usuário acompanha tudo ao vivo. NÃO afirme que 'não controla o editor' — você controla via Write/Edit/Bash.\n";
       if (projectMetaCache) {
         const m = projectMetaCache;
         s += "\nCONTEXTO DO PROJETO:\n";
@@ -9404,6 +9482,7 @@ function createChatPanel(cfg) {
     const statusIconEl = document.getElementById(pid + "_statusIcon");
     let toolCount = 0;
     let thinkingActive = false;
+    const agentEditPending = {}; // tool_use id -> file_path (for Write/Edit auto-open)
     const startTime = Date.now();
     let statusTimer = null;
     function paintStatus() {
@@ -9464,7 +9543,31 @@ function createChatPanel(cfg) {
       coreCwd: useCore ? PROJECT_ROOT : null,
       onEvent: function(evt) {
         if (evt.kind === "thinking") { thinkingActive = true; paintStatus(); }
-        else if (evt.kind === "tool") { toolCount++; paintStatus(); }
+        else if (evt.kind === "tool") {
+          toolCount++; paintStatus();
+          if (isCodePanel && (evt.name === "Write" || evt.name === "Edit")) {
+            const fp = (evt.input && evt.input.file_path) || null;
+            agentEditPending[evt.id] = fp;
+            // Pulse already-open tab during execution (file may not exist yet for Write).
+            if (fp) {
+              const t = codeTabs.find(x => x.path === fp);
+              if (t) { t.streaming = true; renderTabs(); }
+            }
+          }
+        }
+        else if (evt.kind === "tool_result") {
+          if (isCodePanel) {
+            const fp = agentEditPending[evt.id];
+            if (fp) {
+              delete agentEditPending[evt.id];
+              const t = codeTabs.find(x => x.path === fp);
+              if (t && t.streaming) { t.streaming = false; renderTabs(); }
+              if (evt.ok !== false && typeof openFileFromAgent === "function") {
+                openFileFromAgent(fp);
+              }
+            }
+          }
+        }
         else if (evt.kind === "token") { thinkingActive = false; paintStatus(); }
       },
     });
@@ -11063,9 +11166,16 @@ function _toastContainer() {
   return c;
 }
 
-function showToast(msg, kind) {
-  kind = kind || "success";
-  const duration = 3500;
+function showToast(msg, kindOrOpts) {
+  // Backwards compat: showToast("msg") → success
+  // showToast("msg", "error") or showToast("msg", { kind:"warn", duration:5000, onClick: fn })
+  let kind = "success", duration = 3500, onClick = null;
+  if (typeof kindOrOpts === "string") kind = kindOrOpts;
+  else if (kindOrOpts && typeof kindOrOpts === "object") {
+    kind = kindOrOpts.kind || "success";
+    if (typeof kindOrOpts.duration === "number") duration = kindOrOpts.duration;
+    if (typeof kindOrOpts.onClick === "function") onClick = kindOrOpts.onClick;
+  }
   const palette = {
     success: { bg: "#16a34a", icon: "✓" },
     error:   { bg: "#dc2626", icon: "✕" },
@@ -11089,7 +11199,9 @@ function showToast(msg, kind) {
     t.style.opacity = "0"; t.style.transform = "translateX(20px)";
     setTimeout(() => { try { t.remove(); } catch {} }, 200);
   };
-  t.onclick = dismiss;
+  t.onclick = onClick
+    ? () => { try { onClick(); } catch {} dismiss(); }
+    : dismiss;
   setTimeout(dismiss, duration);
   return dismiss;
 }
