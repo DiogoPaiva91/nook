@@ -13,6 +13,8 @@ const workerBus = require("./lib/workers/bus");
 const chatStore = require("./lib/chat/conversations");
 const chatSnapshot = require("./lib/chat/snapshot");
 const chatDistill = require("./lib/chat/distill");
+const codeDb = require("./lib/code/db");
+const codeScaffold = require("./lib/code/scaffold");
 const planLib = require("./lib/plan");
 const profileLib = require("./lib/profile");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
@@ -2884,10 +2886,17 @@ function startDevServer(projectPath) {
   const existing = devServers.get(safe);
   if (existing && existing.proc) return { ok: true, message: "ja rodando", state: getDevServerState(safe) };
 
+  // Injeção de DATABASE_URL=dev estilo Replit: se o projeto foi provisionado
+  // (tem .env.development), o dev server aponta pro banco <proj>_dev.
+  const devEnv = { ...process.env, FORCE_COLOR: "0", BROWSER: "none" };
+  if (fs.existsSync(path.join(safe, ".env.development"))) {
+    devEnv.DATABASE_URL = codeDb.connString(path.basename(safe), "dev");
+    devEnv.NODE_ENV = "development";
+  }
   const proc = spawn("npm", ["run", "dev"], {
     cwd: safe,
     stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, FORCE_COLOR: "0", BROWSER: "none" },
+    env: devEnv,
   });
   const state = { proc, pid: proc.pid, port: null, url: null, logs: [], startedAt: Date.now(), exitCode: null };
   devServers.set(safe, state);
@@ -4837,6 +4846,58 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
     res.writeHead(200, { "Content-Type": "application/json" });
     return res.end(JSON.stringify({ logs: getDevServerLogs(u.searchParams.get("path") || "", u.searchParams.get("max")) }));
   }
+  // ── Postgres local (Docker) por projeto — dev/prod estilo Replit ──
+  if (req.url === "/api/code/db/provision" && req.method === "POST") {
+    let body = ""; req.on("data", c => body += c);
+    req.on("end", async () => {
+      try {
+        const d = JSON.parse(body || "{}");
+        const safe = _safeProjectPath(d.path);
+        if (!safe) throw new Error("Caminho invalido (so projetos em ~/dev/projetos)");
+        const name = path.basename(safe);
+        const dbInfo = await codeDb.provision(name);
+        const scaffold = codeScaffold.scaffoldDrizzle(safe, name);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, db: dbInfo, scaffold }));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+  if (req.url.startsWith("/api/code/db/status") && req.method === "GET") {
+    const u = new URL(req.url, "http://localhost");
+    const safe = _safeProjectPath(u.searchParams.get("path") || "");
+    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
+    codeDb.status(path.basename(safe)).then((st) => {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(st));
+    }).catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
+    return;
+  }
+  if ((req.url === "/api/code/db/migrate" || req.url === "/api/code/db/generate" || req.url === "/api/code/db/promote") && req.method === "POST") {
+    let body = ""; req.on("data", c => body += c);
+    req.on("end", async () => {
+      try {
+        const d = JSON.parse(body || "{}");
+        const safe = _safeProjectPath(d.path);
+        if (!safe) throw new Error("Caminho invalido");
+        const name = path.basename(safe);
+        let r;
+        if (req.url.endsWith("/generate")) r = await codeScaffold.runDrizzle(safe, name, "dev", "generate");
+        else if (req.url.endsWith("/promote")) r = await codeScaffold.runDrizzle(safe, name, "prod", "migrate");
+        else r = await codeScaffold.runDrizzle(safe, name, d.env === "prod" ? "prod" : "dev", "migrate");
+        res.writeHead(r.ok ? 200 : 500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(r));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
   if (req.url === "/api/hub/tree" && req.method === "GET") return hubTree(res);
   if (req.url.startsWith("/api/hub/file") && req.method === "GET") {
     const u = new URL(req.url, "http://localhost");
@@ -4951,6 +5012,7 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
           temperature: typeof data.temperature === "number" ? data.temperature : undefined,
           interrupt: !!data.interrupt,
           permissionMode: typeof data.permissionMode === "string" ? data.permissionMode : null,
+          effort: typeof data.effort === "string" ? data.effort : null,
         };
         const wasRunning = worker.status === "running";
         worker.sendMessage(content, opts).catch((err) => {
@@ -4967,6 +5029,26 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: e.message }));
       }
+    });
+    return;
+  }
+
+  const workerPermMatch = req.url.match(/^\/api\/workers\/([a-z0-9_]+)\/permission$/i);
+  if (workerPermMatch && req.method === "POST") {
+    let body = ""; req.on("data", (c) => (body += c));
+    req.on("end", () => {
+      // Repassa a decisão de permissão (allow/deny + answers) ao sidecar SDK,
+      // que resolve o PreToolUse hook bloqueado.
+      const payload = body || "{}";
+      const fwd = http.request({
+        host: "127.0.0.1", port: 3001, path: "/sdk/permission", method: "POST",
+        headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(payload) },
+      }, (sr) => {
+        let out = ""; sr.on("data", (c) => (out += c));
+        sr.on("end", () => { res.writeHead(sr.statusCode || 200, { "Content-Type": "application/json" }); res.end(out || "{}"); });
+      });
+      fwd.on("error", (e) => { res.writeHead(502, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: "sidecar: " + e.message })); });
+      fwd.write(payload); fwd.end();
     });
     return;
   }

@@ -1051,6 +1051,12 @@
       background: var(--surface2); color: #ef4444; border: 1px solid #ef444444;
     }
     .step-denied { opacity: 0.5; text-decoration: line-through; }
+    .aq-q { margin: 8px 0; }
+    .aq-qtext { font-size: 13px; margin: 6px 0 5px; font-weight: 600; }
+    .aq-qtext em { font-weight: 400; opacity: 0.6; }
+    .aq-opts { display: flex; flex-wrap: wrap; gap: 6px; }
+    .approval-btn.aq-opt { background: var(--surface2); color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+    .approval-btn.aq-opt.aq-sel { outline: 2px solid var(--accent-strong); background: var(--accent-soft, #0ea5e922); }
 
     /* ── Thinking Block ── */
     .thinking-block {
@@ -3752,16 +3758,23 @@ async function send() {
     }
   }
 
+  function postPermission(permId, decision, extra) {
+    if (!permId) return;
+    fetch("/api/workers/" + encodeURIComponent(serverId) + "/permission", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(Object.assign({ permId: permId, decision: decision }, extra || {})),
+    }).catch(function(){});
+  }
+
   function drainQueue() {
     while (eventQueue.length > 0) {
       const evt = eventQueue[0];
-      // Check if this is a sensitive tool that needs approval
-      if (evt.kind === "tool" && !toolAutoApprove.has(evt.name)) {
-        // Process the tool_use (show the step card), then show approval
+      // Permissão real: o sidecar pausou a tool e espera nossa decisão.
+      if (evt.kind === "permission_request") {
         eventQueue.shift();
-        processEvent(evt);
+        if (toolAutoApprove.has(evt.name)) { postPermission(evt.permId, "allow"); continue; }
         showApproval(evt);
-        return; // pause
+        return; // pausa até o usuário decidir
       }
       eventQueue.shift();
       processEvent(evt);
@@ -3771,35 +3784,86 @@ async function send() {
 
   function showApproval(evt) {
     ensureStructure();
-    showStatusPill("&#128993;", "Aguardando sua aprovacao...", "approval");
+    showStatusPill("&#128993;", "Aguardando voce...", "approval");
     approvalCardEl = document.createElement("div");
     approvalCardEl.className = "approval-card";
+    if (evt.name === "AskUserQuestion" && evt.input && Array.isArray(evt.input.questions)) {
+      renderQuestionForm(evt);
+    } else {
+      renderApprovalButtons(evt);
+    }
+    streamDiv.insertBefore(approvalCardEl, contentEl);
+    container.scrollTop = container.scrollHeight;
+  }
+
+  function renderApprovalButtons(evt) {
     const inputPreview = JSON.stringify(evt.input || {}, null, 2);
     const shortLabel = toolLabel(evt.name, evt.input || {});
     approvalCardEl.innerHTML = '<div class="approval-header">'
-      + '<span class="approval-icon">&#9888;&#65039;</span>'
+      + '<span class="approval-icon">&#9888;&#65039;</span> '
       + escapeHtml(asst.name).replace(/<br>/g,"") + ' quer executar: <strong>' + escapeHtml(evt.name) + '</strong></div>'
       + '<div class="approval-tool">' + toolIcon(evt.name) + ' ' + escapeHtml(shortLabel).replace(/<br>/g,"")
       + '\n\n' + escapeHtml(inputPreview).replace(/<br>/g,"\n") + '</div>'
       + '<div class="approval-btns">'
-      + '<button class="approval-btn approve" data-tid="' + evt.id + '">&#10003; Aprovar</button>'
-      + '<button class="approval-btn approve-always" data-tid="' + evt.id + '" data-tname="' + escAttr(evt.name) + '">&#10003; Aprovar sempre ' + escapeHtml(evt.name).replace(/<br>/g,"") + '</button>'
-      + '<button class="approval-btn deny" data-tid="' + evt.id + '">&#10007; Negar</button>'
+      + '<button class="approval-btn approve">&#10003; Aprovar</button>'
+      + '<button class="approval-btn approve-always">&#10003; Aprovar sempre ' + escapeHtml(evt.name).replace(/<br>/g,"") + '</button>'
+      + '<button class="approval-btn deny">&#10007; Negar</button>'
       + '</div>';
-    // Insert before contentEl
-    streamDiv.insertBefore(approvalCardEl, contentEl);
-    container.scrollTop = container.scrollHeight;
-
-    // Button handlers
     approvalCardEl.querySelector(".approve").onclick = function() {
-      removeApproval(); drainQueue();
+      postPermission(evt.permId, "allow"); removeApproval(); drainQueue();
     };
     approvalCardEl.querySelector(".approve-always").onclick = function() {
       toolAutoApprove.add(evt.name); saveToolAllowList();
-      removeApproval(); drainQueue();
+      postPermission(evt.permId, "allow"); removeApproval(); drainQueue();
     };
     approvalCardEl.querySelector(".deny").onclick = function() {
-      deniedTools.add(evt.id);
+      postPermission(evt.permId, "deny", { message: "Negado pelo usuario." });
+      removeApproval(); drainQueue();
+    };
+  }
+
+  function renderQuestionForm(evt) {
+    const questions = evt.input.questions || [];
+    const picks = {};
+    let html = '<div class="approval-header"><span class="approval-icon">&#10067;</span> '
+      + escapeHtml(asst.name).replace(/<br>/g,"") + ' pergunta:</div>';
+    questions.forEach(function(q, qi) {
+      picks[qi] = new Set();
+      const multi = !!q.multiSelect;
+      html += '<div class="aq-q" data-qi="' + qi + '">'
+        + '<div class="aq-qtext">' + escapeHtml(q.question || q.header || "") + (multi ? ' <em>(varias)</em>' : '') + '</div>'
+        + '<div class="aq-opts">';
+      (q.options || []).forEach(function(opt, oi) {
+        html += '<button class="approval-btn aq-opt" data-qi="' + qi + '" data-oi="' + oi + '">'
+          + escapeHtml(opt.label || "") + '</button>';
+      });
+      html += '</div></div>';
+    });
+    html += '<div class="approval-btns"><button class="approval-btn approve aq-send">Enviar resposta</button></div>';
+    approvalCardEl.innerHTML = html;
+    const labelOf = function(qi, oi) { return (questions[qi].options[oi] || {}).label || ""; };
+    approvalCardEl.querySelectorAll(".aq-opt").forEach(function(btn) {
+      btn.onclick = function() {
+        const qi = +btn.dataset.qi, oi = +btn.dataset.oi;
+        const multi = !!questions[qi].multiSelect;
+        const lbl = labelOf(qi, oi);
+        if (multi) {
+          if (picks[qi].has(lbl)) { picks[qi].delete(lbl); btn.classList.remove("aq-sel"); }
+          else { picks[qi].add(lbl); btn.classList.add("aq-sel"); }
+        } else {
+          picks[qi].clear(); picks[qi].add(lbl);
+          approvalCardEl.querySelectorAll('.aq-opt[data-qi="' + qi + '"]').forEach(function(b){ b.classList.remove("aq-sel"); });
+          btn.classList.add("aq-sel");
+        }
+      };
+    });
+    approvalCardEl.querySelector(".aq-send").onclick = function() {
+      const lines = [];
+      questions.forEach(function(q, qi) {
+        const sel = Array.from(picks[qi]);
+        lines.push((q.question || q.header || ("Pergunta " + (qi+1))) + ": " + (sel.length ? sel.join(", ") : "(sem resposta)"));
+      });
+      postPermission(evt.permId, "answer", { message: "Respostas do usuario:\n" + lines.join("\n") });
       removeApproval(); drainQueue();
     };
   }
@@ -3912,7 +3976,7 @@ async function send() {
       historyLimit: getHistoryLimit(),
       temperature: asst.temperature,
       bmadAgent: bmadAgent || undefined,
-      permissionMode: chatPlanMode ? "plan" : undefined,
+      permissionMode: chatPlanMode ? "plan" : "default",
     };
     const res = await fetch("/api/workers/" + encodeURIComponent(serverId) + "/message", {
       method: "POST",

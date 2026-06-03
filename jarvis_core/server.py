@@ -23,6 +23,7 @@ from claude_agent_sdk import (  # noqa: E402
     ResultMessage,
 )
 
+from jarvis_core.chat_sdk import handle_sdk_chat, handle_sdk_permission  # noqa: E402
 from jarvis_core.bmad_loader import load_agent, list_agents  # noqa: E402
 from jarvis_core.agent_context import enrich_prompt, enrich_prompt_async, get_hub_summary, read_user_profile  # noqa: E402
 from jarvis_core import embeddings as embed  # noqa: E402
@@ -1325,6 +1326,8 @@ def make_app() -> web.Application:
     app.router.add_get("/health", handle_health)
     app.router.add_get("/agents", handle_agents)
     app.router.add_post("/chat", handle_chat)
+    app.router.add_post("/sdk/chat", handle_sdk_chat)
+    app.router.add_post("/sdk/permission", handle_sdk_permission)
     app.router.add_post("/browser/task", handle_browser_task)
     app.router.add_get("/hub/list", handle_hub_list)
     app.router.add_get("/hub/search", handle_hub_search)
