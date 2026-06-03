@@ -15,6 +15,22 @@ const chatSnapshot = require("./lib/chat/snapshot");
 const chatDistill = require("./lib/chat/distill");
 const codeDb = require("./lib/code/db");
 const codeScaffold = require("./lib/code/scaffold");
+const codePreamble = require("./lib/workers/providers/_preamble");
+
+// Drizzle Studio (GUI de tabelas) — um por vez, na 4983; aponta pro banco _dev.
+let _studio = { proc: null, path: null, startedAt: 0 };
+function startDrizzleStudio(safePath, name) {
+  if (_studio.proc && _studio.path === safePath) return { ok: true, url: "https://local.drizzle.studio", already: true };
+  if (_studio.proc) { try { _studio.proc.kill("SIGTERM"); } catch {} _studio = { proc: null, path: null, startedAt: 0 }; }
+  const databaseUrl = codeDb.connString(name, "dev");
+  const proc = spawn("npx", ["drizzle-kit", "studio", "--host", "127.0.0.1", "--port", "4983"], {
+    cwd: safePath, env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: ["ignore", "pipe", "pipe"],
+  });
+  _studio = { proc, path: safePath, startedAt: Date.now() };
+  const clear = () => { if (_studio.proc === proc) _studio = { proc: null, path: null, startedAt: 0 }; };
+  proc.on("exit", clear); proc.on("error", clear);
+  return { ok: true, url: "https://local.drizzle.studio" };
+}
 const planLib = require("./lib/plan");
 const profileLib = require("./lib/profile");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
@@ -429,6 +445,11 @@ function claudeChat(model, messages, res, stream, systemPrompt, headersSent, cwd
   const HUB_DIR = "/home/diogo/dev/_hub";
   if (fs.existsSync(HUB_DIR)) args.push("--add-dir", HUB_DIR);
   if (model) args.push("--model", model);
+  // Política de banco: projeto sob ~/dev/projetos usa Postgres (nunca SQLite).
+  // Anexada server-side pra valer também em projetos antigos sem a seção no CLAUDE.md.
+  if (cwd && typeof cwd === "string" && path.resolve(cwd).startsWith("/home/diogo/dev/projetos/")) {
+    systemPrompt = codePreamble.DB_POLICY + (systemPrompt ? "\n\n---\n\n" + systemPrompt : "");
+  }
   if (systemPrompt) args.push("--append-system-prompt", systemPrompt);
 
   let safeCwd = null;
@@ -2066,6 +2087,24 @@ Pages ficam em \`jarvis-pages/<nome>.page.json\`. Duas formas de consumir:
 Pages têm formato: \`{ name, root: { id, type, props, children, events } }\`. 14 tipos suportados (Container/Card/Section/Heading/H2/H3/Text/Link/Button/Input/Image/Divider/Badge/Avatar). Workflows de eventos: alert/log/navigate/setState/fetch.
 ` : "";
 
+  const dbBlock = [
+    "## Banco de dados",
+    "",
+    "Banco deste projeto = **Postgres**, provisionado pelo Jarvis Hub. **SQLite é proibido** aqui (`node:sqlite`, `better-sqlite3`, `sql.js`, arquivos `.db` locais) — não improvise um `db.js`/`server/db.js` nem escreva conexão na mão. (Quem usa SQLite é só o repo do Hub, não este projeto.)",
+    "",
+    "- **Provisionar** (cria `<proj>_dev` + `<proj>_prod` no Postgres compartilhado e faz scaffold Drizzle): clique no botão **🗄️ Banco** no Code mode, ou rode (use o **diretório-raiz** deste projeto, onde está o `package.json`):",
+    "  `curl -s -X POST http://localhost:3000/api/code/db/provision -H 'Content-Type: application/json' -d '{\"path\":\"<dir absoluto deste projeto>\"}'`",
+    "  Gera `db/index.ts`, `db/schema.ts`, `drizzle.config.ts`, os `.env.development`/`.env.production` e adiciona `drizzle-orm`, `pg`, `drizzle-kit`. Confira o retorno (`{\"ok\":true}` = ok).",
+    "- **No código:** importe o cliente de `db/index.ts` e leia a connection string de `process.env.DATABASE_URL` (o `npm run dev` injeta o banco `_dev` automaticamente). **Nunca hardcode** credenciais nem connection string.",
+    "- **Schema:** defina tabelas em `db/schema.ts`.",
+    "- **Migrations** (via Hub, não rode `psql`/`drizzle-kit` à mão):",
+    "  - generate: `curl -s -X POST http://localhost:3000/api/code/db/generate -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\"}'`",
+    "  - aplicar no dev: `curl -s -X POST http://localhost:3000/api/code/db/migrate -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\",\"env\":\"dev\"}'`",
+    "  - promover pro prod: `curl -s -X POST http://localhost:3000/api/code/db/promote -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\"}'`",
+    "  - status: `curl -s 'http://localhost:3000/api/code/db/status?path=<dir>'`",
+    "- **Migrando de SQLite:** se este projeto ainda tiver SQLite, rode `/provision`, porte as tabelas pra `db/schema.ts`, troque os imports pro `db/index.ts` + `process.env.DATABASE_URL`, e remova o adapter, a dep e os arquivos `.db`.",
+  ].join("\n");
+
   return `# CLAUDE.md — ${name}
 
 Instruções pra Claude Code (e outros assistentes IA) trabalhando neste projeto.
@@ -2080,6 +2119,8 @@ ${stackBlock}${commandsBlock}
 
 ${projectStructure}
 ${bmadBlock}${builderBlock}
+${dbBlock}
+
 ## Convenções
 
 - **Sem dependências novas sem aval.** Stack atual deve ser preservada.
@@ -2893,7 +2934,10 @@ function startDevServer(projectPath) {
     devEnv.DATABASE_URL = codeDb.connString(path.basename(safe), "dev");
     devEnv.NODE_ENV = "development";
   }
-  const proc = spawn("npm", ["run", "dev"], {
+  // Full-stack: se há "dev:all" (ex: concurrently api+web), roda ele pra subir o
+  // backend junto — senão a API do projeto nunca sobe e o app fica só no localStorage.
+  const devScript = (pkg.scripts && pkg.scripts["dev:all"]) ? "dev:all" : "dev";
+  const proc = spawn("npm", ["run", devScript], {
     cwd: safe,
     stdio: ["ignore", "pipe", "pipe"],
     env: devEnv,
@@ -2904,14 +2948,18 @@ function startDevServer(projectPath) {
   const onLine = (line) => {
     if (state.logs.length >= 200) state.logs.shift();
     state.logs.push(line);
-    if (!state.url) {
-      // Vite: "Local:   http://localhost:5173/"
-      // Next.js: "- Local:        http://localhost:3000"
-      // Express via tsx watch: custom — accept anything matching localhost:<port>
+    {
+      // Vite/Next: "Local:   http://localhost:5173/". Com dev:all (api+web), a API
+      // pode logar a URL antes — preferimos a linha "Local:" (o web app) e travamos
+      // nela, pro preview não apontar pro backend (ex: :3333).
       const m = line.match(/https?:\/\/(?:localhost|127\.0\.0\.1):(\d+)/);
       if (m) {
-        state.port = Number(m[1]);
-        state.url = "http://localhost:" + state.port;
+        const fromMarker = /\bLocal:/i.test(line);
+        if (!state.url || (fromMarker && !state._urlMarker)) {
+          state.port = Number(m[1]);
+          state.url = "http://localhost:" + state.port;
+          if (fromMarker) state._urlMarker = true;
+        }
       }
     }
   };
@@ -4889,6 +4937,92 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
         else if (req.url.endsWith("/promote")) r = await codeScaffold.runDrizzle(safe, name, "prod", "migrate");
         else r = await codeScaffold.runDrizzle(safe, name, d.env === "prod" ? "prod" : "dev", "migrate");
         res.writeHead(r.ok ? 200 : 500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(r));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url.startsWith("/api/code/db/tables") && req.method === "GET") {
+    const u = new URL(req.url, "http://localhost");
+    const safe = _safeProjectPath(u.searchParams.get("path") || "");
+    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
+    const env = u.searchParams.get("env") === "prod" ? "prod" : "dev";
+    codeDb.listTables(path.basename(safe), env)
+      .then((r) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(r)); })
+      .catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
+    return;
+  }
+  if (req.url.startsWith("/api/code/db/rows") && req.method === "GET") {
+    const u = new URL(req.url, "http://localhost");
+    const safe = _safeProjectPath(u.searchParams.get("path") || "");
+    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
+    const env = u.searchParams.get("env") === "prod" ? "prod" : "dev";
+    codeDb.getRows(path.basename(safe), env, u.searchParams.get("table") || "", u.searchParams.get("limit"), u.searchParams.get("offset"))
+      .then((r) => { res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" }); res.end(JSON.stringify(r)); })
+      .catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
+    return;
+  }
+  if (req.url === "/api/code/db/studio" && req.method === "POST") {
+    let body = ""; req.on("data", c => body += c);
+    req.on("end", () => {
+      try {
+        const d = JSON.parse(body || "{}");
+        const safe = _safeProjectPath(d.path);
+        if (!safe) throw new Error("Caminho invalido");
+        const r = startDrizzleStudio(safe, path.basename(safe));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(r));
+      } catch (e) { res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); }
+    });
+    return;
+  }
+
+  if (req.url.startsWith("/api/code/db/columns") && req.method === "GET") {
+    const u = new URL(req.url, "http://localhost");
+    const safe = _safeProjectPath(u.searchParams.get("path") || "");
+    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
+    const env = u.searchParams.get("env") === "prod" ? "prod" : "dev";
+    codeDb.getColumns(path.basename(safe), env, u.searchParams.get("table") || "")
+      .then((r) => { res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" }); res.end(JSON.stringify(r)); })
+      .catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
+    return;
+  }
+  if (req.url === "/api/code/db/row" && (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE")) {
+    let body = ""; req.on("data", c => body += c);
+    req.on("end", async () => {
+      try {
+        const d = JSON.parse(body || "{}");
+        const safe = _safeProjectPath(d.path);
+        if (!safe) throw new Error("Caminho invalido (so projetos em ~/dev/projetos)");
+        const name = path.basename(safe);
+        const env = d.env === "prod" ? "prod" : "dev";
+        let r;
+        if (req.method === "POST") r = await codeDb.insertRow(name, env, d.table, d.values || {});
+        else if (req.method === "PATCH") r = await codeDb.updateRow(name, env, d.table, d.pk || {}, d.values || {});
+        else r = await codeDb.deleteRow(name, env, d.table, d.pk || {});
+        res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(r));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+  if (req.url === "/api/code/db/sql" && req.method === "POST") {
+    let body = ""; req.on("data", c => body += c);
+    req.on("end", async () => {
+      try {
+        const d = JSON.parse(body || "{}");
+        const safe = _safeProjectPath(d.path);
+        if (!safe) throw new Error("Caminho invalido (so projetos em ~/dev/projetos)");
+        const env = d.env === "prod" ? "prod" : "dev";
+        const r = await codeDb.runSql(path.basename(safe), env, d.sql || "");
+        res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
         res.end(JSON.stringify(r));
       } catch (e) {
         res.writeHead(400, { "Content-Type": "application/json" });
