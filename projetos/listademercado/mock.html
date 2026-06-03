@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de Mercado — Mock</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Lista de Mercado</h1>
+      <p class="counter">2 de 5 itens</p>
+    </header>
+
+    <form class="add-form" autocomplete="off" onsubmit="return false">
+      <label for="item-input" class="visually-hidden">Novo item</label>
+      <input
+        id="item-input"
+        name="item"
+        type="text"
+        placeholder="Ex: Leite, pao, ovos..."
+        maxlength="80"
+      >
+      <button type="submit">Adicionar</button>
+    </form>
+
+    <ul class="list">
+      <li class="list-item">
+        <input type="checkbox" class="list-item__checkbox" aria-label="Marcar Leite">
+        <span class="list-item__name">Leite</span>
+        <button class="list-item__remove" aria-label="Remover Leite">×</button>
+      </li>
+      <li class="list-item bought">
+        <input type="checkbox" class="list-item__checkbox" checked aria-label="Marcar Pao">
+        <span class="list-item__name">Pao integral</span>
+        <button class="list-item__remove" aria-label="Remover Pao">×</button>
+      </li>
+      <li class="list-item">
+        <input type="checkbox" class="list-item__checkbox" aria-label="Marcar Ovos">
+        <span class="list-item__name">Ovos (duzia)</span>
+        <button class="list-item__remove" aria-label="Remover Ovos">×</button>
+      </li>
+      <li class="list-item bought">
+        <input type="checkbox" class="list-item__checkbox" checked aria-label="Marcar Cafe">
+        <span class="list-item__name">Cafe em po</span>
+        <button class="list-item__remove" aria-label="Remover Cafe">×</button>
+      </li>
+      <li class="list-item">
+        <input type="checkbox" class="list-item__checkbox" aria-label="Marcar Banana">
+        <span class="list-item__name">Banana prata</span>
+        <button class="list-item__remove" aria-label="Remover Banana">×</button>
+      </li>
+    </ul>
+
+    <button class="clear-all" type="button">Limpar lista</button>
+  </main>
+</body>
+</html>

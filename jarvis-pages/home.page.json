@@ -1,0 +1,61 @@
+{
+  "name": "home",
+  "root": {
+    "id": "el_i9620ps",
+    "type": "Container",
+    "props": {
+      "className": "min-h-screen items-center justify-center block gap-0 p-1 rounded-md bg-amber-400"
+    },
+    "children": [
+      {
+        "id": "el_z6v69ur",
+        "type": "Card",
+        "props": {
+          "className": "max-w-md w-full text-2xl"
+        },
+        "children": [
+          {
+            "id": "el_6r3cggo",
+            "type": "Heading",
+            "props": {
+              "text": "Bem-vindo",
+              "className": "text-2xl font-bold"
+            },
+            "children": []
+          },
+          {
+            "id": "el_yqx3sho",
+            "type": "Text",
+            "props": {
+              "text": "Sua primeira página visual no Jarvis.",
+              "className": "text-slate-400 mt-2"
+            },
+            "children": []
+          },
+          {
+            "id": "el_egs0wts",
+            "type": "Input",
+            "props": {
+              "placeholder": "Seu nome",
+              "className": "mt-4"
+            },
+            "children": [],
+            "events": {}
+          },
+          {
+            "id": "el_jvfzesj",
+            "type": "Card",
+            "props": {
+              "text": "Cumprimentar",
+              "className": "mt-4 w-full inline-flex"
+            },
+            "children": [],
+            "events": {}
+          }
+        ],
+        "events": {}
+      }
+    ],
+    "events": {}
+  }
+}

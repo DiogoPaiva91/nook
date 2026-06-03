@@ -25,3 +25,9 @@ Thumbs.db
 dist/
 build/
 .cache/
+
+# python sidecar
+.venv/
+__pycache__/
+*.pyc
+bmad-shared/_bmad-output/

@@ -1,0 +1,23 @@
+#!/bin/bash
+# Roda os testes Python antes de cada commit.
+# Bypass: git commit --no-verify (use só em emergência)
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+PY="$REPO_ROOT/.venv/bin/python"
+PYTEST="$REPO_ROOT/.venv/bin/pytest"
+
+if [ ! -x "$PYTEST" ]; then
+  echo "[pre-commit] pytest não encontrado em $PYTEST — pulando testes"
+  exit 0
+fi
+
+# Só roda se algum arquivo .py mudou (rápido em commits só de JS/HTML)
+CHANGED_PY=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.py$' || true)
+if [ -z "$CHANGED_PY" ]; then
+  exit 0
+fi
+
+echo "[pre-commit] rodando pytest..."
+cd "$REPO_ROOT"
+"$PYTEST" tests/ -q --tb=short

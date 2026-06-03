@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de Mercado</title>
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <main class="app">
+    <header class="app__header">
+      <h1>Lista de Mercado</h1>
+      <p id="counter" class="counter" hidden></p>
+    </header>
+
+    <form id="add-form" class="add-form" autocomplete="off">
+      <label for="item-input" class="visually-hidden">Novo item</label>
+      <input
+        id="item-input"
+        name="item"
+        type="text"
+        placeholder="Ex: Leite, pao, ovos..."
+        maxlength="80"
+        required
+      >
+      <button type="submit">Adicionar</button>
+    </form>
+
+    <p id="empty-state" class="empty-state">
+      Sua lista esta vazia. Adicione o primeiro item!
+    </p>
+
+    <ul id="list" class="list" hidden></ul>
+
+    <button id="clear-all" class="clear-all" type="button" hidden>
+      Limpar lista
+    </button>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
