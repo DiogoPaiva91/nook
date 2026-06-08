@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jarvis Hub</title>
+  <title>Nook Studio</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css">
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
@@ -1293,7 +1293,7 @@
   <!-- MODE: CHAT -->
   <div class="mode-container active" id="mode-chat">
   <div class="sidebar">
-    <div class="logo">JARVIS HUB</div>
+    <div class="logo">NOOK STUDIO</div>
     <div class="logo-sub">Central de Assistentes IA</div>
 
     <div class="section-header">
@@ -1428,7 +1428,7 @@
   <div class="main">
     <div class="header">
       <span class="header-dot" id="headerDot"></span>
-      <span class="header-title" id="headerTitle">Jarvis</span>
+      <span class="header-title" id="headerTitle">Nook</span>
       <span class="header-status" id="headerStatus">Claude Max - IA Principal</span>
       <span class="readonly-badge" id="readonlyBadge" style="display:none">Somente leitura</span>
       <span class="bmad-toggle" id="bmadToggleChat" onclick="toggleBmad('chat')" title="Ativa agentes BMAD: Analyst, PM e Architect para planejar">&#127919; BMAD</span>
@@ -1482,7 +1482,7 @@
           <button class="cp-tool-btn" onclick="document.getElementById('fileInput').click()" title="Anexar arquivo"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
           <button class="cp-tool-btn" onclick="hubSavePromptUI()" title="Salvar última troca no hub (snippet)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></button>
           <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto">
-            <span class="bmad-toggle cp-mode-toggle" id="planToggleChat" onclick="toggleChatPlan(this)" title="Modo Plano: Jarvis planeja (read-only), nao edita arquivos" style="margin:0;padding:6px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>Plan</span>
+            <span class="bmad-toggle cp-mode-toggle" id="planToggleChat" onclick="toggleChatPlan(this)" title="Modo Plano: Nook planeja (read-only), nao edita arquivos" style="margin:0;padding:6px 9px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:3px"><path d="m3 17 2 2 4-4"/><path d="m3 7 2 2 4-4"/><path d="M13 6h8"/><path d="M13 12h8"/><path d="M13 18h8"/></svg>Plan</span>
             <select id="modelSelect" onchange="changeModel(this.value);updateChatModelLabel()" style="display:none"><option value="opus">Opus</option><option value="sonnet">Sonnet</option><option value="haiku">Haiku</option></select>
             <button type="button" class="cp-tool-btn cp-model-btn" id="chatModelBtn" title="Modelo Claude" onclick="openChatModelPopover(this)"><span id="chatModelLbl">Opus</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
             <button id="sendBtn" class="cp-send-btn" onclick="onSendBtnClick()" title="Enviar"><svg viewBox="0 0 24 24" style="width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg></button>
@@ -1817,11 +1817,11 @@
     </div>
   </div>
 
-  <!-- MODE: HUB (Obsidian vault + Jarvis memory) -->
+  <!-- MODE: HUB (Obsidian vault + Nook memory) -->
   <div class="mode-container" id="mode-hub">
     <div class="sidebar" style="gap:0">
       <div class="logo">HUB</div>
-      <div class="logo-sub">Cerebro do Jarvis</div>
+      <div class="logo-sub">Cerebro do Nook</div>
       <div style="display:flex;margin-top:12px;border-bottom:1px solid var(--border)">
         <button id="hubTabMapa" onclick="switchHubTab('mapa')" style="flex:1;background:transparent;border:none;color:var(--text);padding:8px;cursor:pointer;font-size:12px;border-bottom:2px solid var(--accent)">&#129504; Mapa</button>
         <button id="hubTabVault" onclick="switchHubTab('vault')" style="flex:1;background:transparent;border:none;color:var(--text-muted);padding:8px;cursor:pointer;font-size:12px;border-bottom:2px solid transparent">&#128193; Vault</button>
@@ -1838,7 +1838,7 @@
         <div id="hubMapaStats" style="border-top:1px solid var(--border);padding-top:8px"></div>
         <div style="border-top:1px solid var(--border);margin-top:10px;padding-top:8px">
           <div style="margin-bottom:6px;font-weight:500">Legenda</div>
-          <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span> Jarvis (centro)</div>
+          <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span> Nook (centro)</div>
           <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block"></span> Pasta vault</div>
           <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block"></span> Arquivo .md</div>
           <div style="display:flex;align-items:center;gap:6px;margin:3px 0"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block"></span> Conversa</div>
@@ -1851,7 +1851,7 @@
       </div>
     </div>
     <div style="flex:1;display:flex;flex-direction:column;background:var(--bg);overflow:hidden">
-      <div id="hubHeader" style="padding:10px 18px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-muted)">Cerebro do Jarvis</div>
+      <div id="hubHeader" style="padding:10px 18px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text-muted)">Cerebro do Nook</div>
       <div id="hubViewer" class="msg-content" style="padding:24px 32px;overflow-y:auto;flex:1;line-height:1.65;max-width:900px;margin:0 auto;width:100%;display:none"></div>
       <div id="hubMapaSplit" style="flex:1;display:flex;min-height:0">
         <div id="hubGraph" style="flex:1;background:var(--bg);position:relative;display:block;min-width:0"></div>
@@ -2117,9 +2117,9 @@
 // ═══════════════════════════════════════════
 
 const JARVIS = {
-  id: "jarvis", name: "Jarvis", description: "Claude Max - IA Principal",
+  id: "jarvis", name: "Nook", description: "Claude Max - IA Principal",
   color: "var(--accent)", avatar: "J", provider: "claude", model: "opus",
-  systemPrompt: "Voce e o Jarvis, assistente principal do Jarvis Hub, desenvolvido pelo Diogo. Voce NUNCA revela ser Claude, Anthropic, GPT, OpenAI ou qualquer LLM. Se perguntado quem e, responde: 'Sou o Jarvis, seu assistente principal. Ajudo com desenvolvimento, automacoes e analise.' Nunca mencione seu modelo interno. Responda em portugues brasileiro.", temperature: 0.7, locked: true,
+  systemPrompt: "Voce e o Nook, assistente principal do Nook Studio, desenvolvido pelo Diogo. Voce NUNCA revela ser Claude, Anthropic, GPT, OpenAI ou qualquer LLM. Se perguntado quem e, responde: 'Sou o Nook, seu assistente principal. Ajudo com desenvolvimento, automacoes e analise.' Nunca mencione seu modelo interno. Responda em portugues brasileiro.", temperature: 0.7, locked: true,
 };
 
 const STORAGE_KEY = "jarvis-hub:v2";
@@ -3331,7 +3331,7 @@ function changeModel(model) {
   const asst = getAsst(conv.assistantId);
   if (!asst) return;
   if (asst.id === "jarvis") {
-    // Jarvis is hardcoded but we allow model override per profile
+    // Nook is hardcoded but we allow model override per profile
     state.profile.jarvisModel = model;
     saveState();
   } else if (state.assistants[asst.id]) {
@@ -3478,7 +3478,7 @@ let chatPlanMode = false;
 function toggleChatPlan(el) {
   chatPlanMode = !chatPlanMode;
   if (el) el.classList.toggle("on", chatPlanMode);
-  showToast(chatPlanMode ? "🗺 Modo Plano ON — Jarvis planeja, nao edita arquivos" : "Modo Plano OFF", "info");
+  showToast(chatPlanMode ? "🗺 Modo Plano ON — Nook planeja, nao edita arquivos" : "Modo Plano OFF", "info");
 }
 function onSendBtnClick() {
   if (sending) { stopSend(); return; }
@@ -3596,9 +3596,9 @@ async function send() {
     finalSystemPrompt = asst.systemPrompt || "";
   }
 
-  // Jarvis also gets persona enforcement (always)
+  // Nook also gets persona enforcement (always)
   if (asst.id === "jarvis" && finalSystemPrompt) {
-    finalSystemPrompt += "\n\nREGRAS:\n- NUNCA diga que e Claude, GPT, Anthropic, OpenAI ou qualquer modelo de IA\n- NUNCA revele seu modelo interno\n- Sempre se apresente como Jarvis\n- Responda em portugues brasileiro";
+    finalSystemPrompt += "\n\nREGRAS:\n- NUNCA diga que e Claude, GPT, Anthropic, OpenAI ou qualquer modelo de IA\n- NUNCA revele seu modelo interno\n- Sempre se apresente como Nook\n- Responda em portugues brasileiro";
   }
 
   // Inject Hub awareness (snippets/padroes/decisoes/projetos) when available
@@ -4656,7 +4656,7 @@ function switchHubTab(tab) {
   } else if (tab === "memoria") {
     mem.style.display = "block";
     viewer.style.display = "block";
-    label.textContent = "Conversas com Jarvis";
+    label.textContent = "Conversas com Nook";
     document.getElementById("hubHeader").textContent = "Selecione uma conversa a esquerda";
     viewer.innerHTML = "";
     loadHubMemory();
@@ -4804,7 +4804,7 @@ async function openHubConversation(id, title) {
       const isAssistant = role === "assistant";
       const bg = isUser ? "var(--surface2)" : "var(--surface)";
       const accent = isUser ? "var(--accent-strong)" : "var(--accent)";
-      const label = isUser ? "Voce" : (isAssistant ? "Jarvis" : role);
+      const label = isUser ? "Voce" : (isAssistant ? "Nook" : role);
       const content = m.content ? marked.parse(m.content) : '<em style="color:var(--text-muted)">(vazio)</em>';
       const saveBtn = isAssistant
         ? '<button onclick="openHubSaveModal(' + idx + ')" title="Salvar como nota no vault" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:2px 8px;border-radius:4px;cursor:pointer;font-size:11px">&#128190; Salvar no vault</button>'
@@ -4828,7 +4828,7 @@ function openHubSaveModal(msgIdx) {
   const preview = document.getElementById("hubSavePreview");
   // Suggested title: first non-empty line, max 80 chars
   const firstLine = (msg.content || "").split("\n").find(l => l.trim()) || "";
-  const suggested = firstLine.replace(/^#+\s*/, "").replace(/\*+/g, "").trim().slice(0, 80) || (hubCurrentTitle || "Nota do Jarvis");
+  const suggested = firstLine.replace(/^#+\s*/, "").replace(/\*+/g, "").trim().slice(0, 80) || (hubCurrentTitle || "Nota do Nook");
   titleInput.value = suggested;
   folderSel.value = "snippets";
   preview.textContent = (msg.content || "").slice(0, 400) + ((msg.content || "").length > 400 ? "..." : "");
@@ -4905,7 +4905,7 @@ async function loadCodeProjects() {
 function renderCodeProjects() {
   const el = document.getElementById("codeProjectList");
   if (!el) return;
-  // Always include Jarvis itself as a special "internal" entry
+  // Always include Nook itself as a special "internal" entry
   const jarvisActive = PROJECT_ROOT === "/home/diogo/dev/jarvis";
   let html = '<div class="asst-item' + (jarvisActive ? " active" : "") + '" style="cursor:pointer;padding:6px 8px;border-radius:6px;display:flex;gap:8px;align-items:center;margin:1px 0" '
     + 'onclick="setCodeProject(\'/home/diogo/dev/jarvis\', \'jarvis\')">'
@@ -5776,7 +5776,7 @@ const BUILDER_PAGE_TEMPLATES = {
       root: _bnode("Container", { className: "min-h-screen bg-slate-950 text-slate-100 p-8 flex items-center justify-center" }, [
         _bnode("Card", { className: "max-w-md w-full" }, [
           _bnode("Heading", { text: "Bem-vindo", className: "text-2xl font-bold" }),
-          _bnode("Text", { text: "Sua primeira página visual no Jarvis.", className: "text-slate-400 mt-2" }),
+          _bnode("Text", { text: "Sua primeira página visual no Nook.", className: "text-slate-400 mt-2" }),
           _bnode("Input", { placeholder: "Seu nome", className: "mt-4" }),
           _bnode("Button", { text: "Cumprimentar", className: "mt-4 w-full" }),
         ]),
@@ -6218,7 +6218,7 @@ async function builderInstallRuntime() {
     showToast && showToast("Runtime só funciona em projetos de ~/dev/projetos/", "warn");
     return;
   }
-  const componentSrc = `// Auto-instalado pelo Jarvis Builder. Renderiza páginas .page.json em runtime.
+  const componentSrc = `// Auto-instalado pelo Nook Builder. Renderiza páginas .page.json em runtime.
 // Não edite — re-instale via UI se precisar atualizar.
 import * as React from "react";
 
@@ -6300,7 +6300,7 @@ export default JBuilderPage;
     }
     // 3) Index file
     const indexPath = PROJECT_ROOT + "/src/jarvis-pages/index.ts";
-    const indexSrc = `// Auto-gerado pelo Jarvis Builder Runtime install.\n${indexLines.join("\n")}\n`;
+    const indexSrc = `// Auto-gerado pelo Nook Builder Runtime install.\n${indexLines.join("\n")}\n`;
     await fetch("/api/fs", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "write", path: indexPath, content: indexSrc }),
@@ -6355,7 +6355,7 @@ async function builderExportJsx() {
     `import { ${Array.from(names).join(", ")} } from "${path}";`
   ).sort();
   const importBlock = importLines.length ? importLines.join("\n") + "\n\n" : "";
-  const code = `// Auto-gerado pelo Jarvis Builder a partir de ${pageName}.page.json
+  const code = `// Auto-gerado pelo Nook Builder a partir de ${pageName}.page.json
 // Edições manuais são sobrescritas no próximo Export.
 ${importBlock ? "\n" + importBlock : "\n"}export default function ${componentName}() {
   return (
@@ -6399,7 +6399,7 @@ async function builderSaveAsSnippet() {
   const title = prompt("Título do snippet:", "Builder · " + name);
   if (!title || !title.trim()) return;
   const json = JSON.stringify(Builder.page, null, 2);
-  const content = "Página do Builder Jarvis (vanilla DOM JSON → renderizada via JBuilderPage runtime ou exportada via builderEmitJsx).\n\n## JSON da página\n\n```json\n" + json + "\n```\n";
+  const content = "Página do Builder Nook (vanilla DOM JSON → renderizada via JBuilderPage runtime ou exportada via builderEmitJsx).\n\n## JSON da página\n\n```json\n" + json + "\n```\n";
   try {
     const r = await fetch("/api/hub/save", {
       method: "POST",
@@ -8949,7 +8949,7 @@ function setCodeCenterView(view) {
 async function initCanvasPane() {
   if (PROJECT_ROOT === "/home/diogo/dev/jarvis") {
     const grid = document.getElementById("canvasGrid");
-    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);padding:30px;text-align:center;font-size:13px">Canvas nao disponivel pro Jarvis Hub. Selecione um projeto em ~/dev/projetos/.</div>';
+    if (grid) grid.innerHTML = '<div style="grid-column:1/-1;color:var(--text-muted);padding:30px;text-align:center;font-size:13px">Canvas nao disponivel pro Nook Studio. Selecione um projeto em ~/dev/projetos/.</div>';
     return;
   }
   if (!devServerState || !devServerState.running || !devServerState.url) {
@@ -9202,7 +9202,7 @@ function reloadPreview() {
     iframe.src = "http://localhost:3000/?_=" + Date.now();
     iframe.dataset.devUrl = "";
     iframe.dataset.jarvisLive = "1";
-    if (status) status.textContent = "Jarvis Hub vivo (:3000) — clique no alvo (◎) pra selecionar um elemento e pedir ajuste no chat";
+    if (status) status.textContent = "Nook Studio vivo (:3000) — clique no alvo (◎) pra selecionar um elemento e pedir ajuste no chat";
     if (typeof updatePreviewBarUI === "function") updatePreviewBarUI();
     return;
   }
@@ -10970,7 +10970,7 @@ function initCodeChatPanel() {
   if (containerEl) containerEl.innerHTML = "";
   codeChatPanel = createChatPanel({
     containerId: "codeChatPanel",
-    name: "Jarvis Código",
+    name: "Nook Código",
     color: "var(--accent)",
     provider: "claude",
     model: getAsst("jarvis").model || "opus",
@@ -10983,7 +10983,7 @@ function initCodeChatPanel() {
     placeholder: "Pergunte sobre o projeto ou peça alterações",
     inputPlaceholder: "Pergunte sobre o código...",
     systemPromptFn: function() {
-      let s = "Você é o Jarvis Código, operando no projeto em " + PROJECT_ROOT + ".\nFerramentas disponíveis: Read, Edit, Write, Bash, Grep, Glob.\n"
+      let s = "Você é o Nook Código, operando no projeto em " + PROJECT_ROOT + ".\nFerramentas disponíveis: Read, Edit, Write, Bash, Grep, Glob.\n"
         + "\nINTEGRAÇÃO COM A UI DO HUB:\n"
         + "- Ao usar Write ou Edit, o painel central abre AUTOMATICAMENTE o arquivo modificado e dá foco. Você não precisa pedir ao usuário pra abrir manualmente.\n"
         + "- Arquivos .md abrem em aba Preview (markdown renderizado); .ts/.tsx/.js/.jsx/.css/.html etc. abrem em aba Source com syntax highlight.\n"
@@ -11749,7 +11749,7 @@ function createChatPanel(cfg) {
   const el = document.getElementById(cfg.containerId);
   if (!el) return null;
   const color = cfg.color || "var(--accent)";
-  const name = cfg.name || "Jarvis";
+  const name = cfg.name || "Nook";
   const compact = cfg.compact || false;
   const pid = cfg.containerId + "_cp";
   const showAttach = cfg.showAttach !== false;
@@ -11864,7 +11864,7 @@ function createChatPanel(cfg) {
     + '<div id="' + pid + '_msgs" style="flex:1;overflow-y:auto;padding:' + (compact?"8px":"14px") + ';display:flex;flex-direction:column;gap:10px;min-height:0">'
     +   '<div style="text-align:center;color:var(--text-dim);font-size:12px;padding:20px 0">' + escapeHtml(cfg.placeholder || "Digite uma mensagem para começar") + '</div>'
     + '</div>'
-    // Status "Jarvis trabalhando" — logo ACIMA do input (pra ficar à vista, não no topo)
+    // Status "Nook trabalhando" — logo ACIMA do input (pra ficar à vista, não no topo)
     + statusHtml
     // Attach bar + Input
     + (isCodePanel
@@ -12339,7 +12339,7 @@ async function openBmadArtifactModal(cacheId) {
     + '<select id="bmadProj" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px">' + projOpts + '</select></div>'
     + '<div style="display:flex;flex-direction:column;gap:3px"><label style="font-size:11px;color:var(--text-muted)">Tipo de artefato</label>'
     + '<select id="bmadKind" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px">' + kindOpts + '</select></div>'
-    + _input("bmadTitle", "Título (opcional)", "ex: PRD Jarvis Hub")
+    + _input("bmadTitle", "Título (opcional)", "ex: PRD Nook Studio")
     + _ta("bmadContent", "Conteúdo", "", cached.content, 12);
   _hubModalShell("📦 Salvar artefato BMAD", fields, async (overlay) => {
     const body = {
@@ -12593,7 +12593,7 @@ function getBmadSystemPrompt(mode, userText) {
 
   // Build prompt: use cached agent file + artifacts
   let prompt = bmadAgentPromptCache[agent] || ("Voce e " + BMAD_NAMES[agent] + ".");
-  prompt += "\nContexto: modo " + mode + " do Jarvis Hub.\n";
+  prompt += "\nContexto: modo " + mode + " do Nook Studio.\n";
   for (const [k, v] of Object.entries(run.artifacts)) {
     prompt += "\n[ARTEFATO: " + k + "]\n" + v.slice(0, 6000) + "\n";
   }
@@ -13121,7 +13121,7 @@ function openLightbox(src) {
 
 loadState();
 
-// Hub summary cache (Jarvis's awareness of the Obsidian vault contents)
+// Hub summary cache (Nook's awareness of the Obsidian vault contents)
 let hubSummaryCache = null;
 async function refreshHubSummary() {
   try {
@@ -14243,7 +14243,7 @@ async function openHubGraphView() {
     +     '</div>'
     +   '</div>'
     +   '<div style="background:color-mix(in srgb, var(--accent) 6%, transparent);border-left:2px solid var(--accent);padding:8px 12px;font-size:11px;color:var(--text-muted);border-radius:4px;line-height:1.5">'
-    +     '<b style="color:var(--text)">Mapa visual do vault Obsidian.</b> Cada bolinha é uma nota (snippet/padrão/decisão/conversa/memória). Linhas conectando = wikilinks <code>[[nome-da-nota]]</code> que você ou o Jarvis criaram. Útil pra ver clusters de conhecimento e ilhas de notas órfãs (sem links). Click numa bolinha pra abrir.'
+    +     '<b style="color:var(--text)">Mapa visual do vault Obsidian.</b> Cada bolinha é uma nota (snippet/padrão/decisão/conversa/memória). Linhas conectando = wikilinks <code>[[nome-da-nota]]</code> que você ou o Nook criaram. Útil pra ver clusters de conhecimento e ilhas de notas órfãs (sem links). Click numa bolinha pra abrir.'
     +   '</div>'
     +   '<svg id="graphSvg" style="flex:1;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;cursor:grab"></svg>'
     + '</div>';
@@ -14498,7 +14498,7 @@ function resumeRunningConversations() {
 
 function attachRunningConv(conv) {
   if (resumePollers.has(conv.id)) return;
-  // Show a banner indicating Jarvis is still working
+  // Show a banner indicating Nook is still working
   showResumingBubble(conv);
   const startedAt = Date.now();
   const intervalId = setInterval(async () => {
@@ -14559,7 +14559,7 @@ function showResumingBubble(conv) {
   el.id = "resumeBubble-" + conv.id;
   el.className = "msg assistant";
   el.style.borderLeft = "3px solid #f59e0b";
-  el.innerHTML = '<div class="msg-label" style="color:#f59e0b">Jarvis (retomando...)</div>'
+  el.innerHTML = '<div class="msg-label" style="color:#f59e0b">Nook (retomando...)</div>'
     + '<div class="msg-content"><div class="resume-status" style="font-size:11px;color:var(--text-muted);margin-bottom:6px">Reconectando ao stream em andamento...</div>'
     + '<div class="resume-text" style="white-space:pre-wrap;line-height:1.6"></div></div>';
   container.appendChild(el);
@@ -14573,7 +14573,7 @@ function updateResumingBubble(conv, streaming) {
   const textEl = el.querySelector(".resume-text");
   const statusEl = el.querySelector(".resume-status");
   if (statusEl) {
-    let parts = ["Jarvis ainda esta trabalhando"];
+    let parts = ["Nook ainda esta trabalhando"];
     if (streaming.tools && streaming.tools.length) parts.push(streaming.tools.length + " ferramenta(s)");
     if (streaming.thinking && streaming.thinking.length) parts.push("pensando " + streaming.thinking.length + " chars");
     statusEl.textContent = parts.join(" - ");
@@ -16284,7 +16284,7 @@ function bwSaveMacro() {
   overlay.innerHTML =
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;width:560px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;gap:10px">'
     +   '<div style="font-size:15px;font-weight:600">💾 Salvar como macro</div>'
-    +   '<div style="font-size:11px;color:var(--text-muted);line-height:1.4">O macro guarda um <strong>procedimento</strong> que o Jarvis vai re-executar adaptando ao contexto de cada vez (data, valores, etc). Edite o texto pra deixar genérico — substitua "26/04" por "hoje", "valor X" por "valor do dia", etc.</div>'
+    +   '<div style="font-size:11px;color:var(--text-muted);line-height:1.4">O macro guarda um <strong>procedimento</strong> que o Nook vai re-executar adaptando ao contexto de cada vez (data, valores, etc). Edite o texto pra deixar genérico — substitua "26/04" por "hoje", "valor X" por "valor do dia", etc.</div>'
     +   '<input id="bwMacroName" type="text" placeholder="Nome (ex: lançar ponto)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;outline:none">'
     +   '<div style="display:flex;justify-content:space-between;align-items:center">'
     +     '<span style="font-size:11px;color:var(--text-muted)">Procedimento (instrução enviada no play)</span>'
@@ -16343,7 +16343,7 @@ function bwSaveMacro() {
 async function bwGenerateProcedure() {
   // Ask Claude to summarize the conversation as a reusable procedure
   const transcript = browserWorker.history.map(m => "[" + m.role + "]: " + m.content).join("\n\n");
-  const meta = "Resuma a sequência abaixo como um PROCEDIMENTO reutilizável que o Jarvis Browser vai executar em outro dia, adaptando ao contexto. "
+  const meta = "Resuma a sequência abaixo como um PROCEDIMENTO reutilizável que o Nook Browser vai executar em outro dia, adaptando ao contexto. "
     + "Use linguagem genérica: \"hoje\" em vez de datas específicas, \"o valor do dia\" em vez de números fixos. "
     + "Saída: lista numerada de passos curtos, em português. Sem explicações.\n\nCONVERSA:\n" + transcript;
   const res = await fetch("/api/core/chat", {
@@ -16382,7 +16382,7 @@ function bwRenderAskPrompt(question) {
   card.style.cssText = "align-self:stretch;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.4);color:var(--text);padding:10px 14px;display:flex;flex-direction:column;gap:8px";
   card.innerHTML =
     '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:#f59e0b;font-weight:500">'
-    +   '<span>⏸</span><span>Jarvis precisa de uma resposta</span>'
+    +   '<span>⏸</span><span>Nook precisa de uma resposta</span>'
     + '</div>'
     + '<div style="font-size:13px;color:var(--text);white-space:pre-wrap">' + escapeHtml(question) + '</div>'
     + '<div style="display:flex;gap:8px">'

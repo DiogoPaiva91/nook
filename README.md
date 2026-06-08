@@ -1,6 +1,6 @@
-# Jarvis Hub
+# Nook Studio
 
-Workspace pessoal multi-modo: **Chat**, **Code** (com IDE visual estilo Bubble), **Cowork** (agentes em paralelo) e **Hub** (vault Obsidian em `~/dev/_hub`). Roda 100% local em `localhost:3000`.
+Workspace multi-modo: **Chat**, **Code** (com IDE visual estilo Bubble), **Cowork** (agentes em paralelo) e **Hub** (vault Obsidian em `~/dev/_hub`). Roda 100% local em `localhost:3000`. *(Codinome interno do repo: `jarvis`.)*
 
 ## Setup
 

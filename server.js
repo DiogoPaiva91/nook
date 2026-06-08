@@ -821,7 +821,7 @@ function hubGraph(res) {
   try {
     const nodes = [];
     const edges = [];
-    nodes.push({ id: "jarvis", label: "Jarvis", group: "core", size: 30, font: { size: 18 } });
+    nodes.push({ id: "jarvis", label: "Nook", group: "core", size: 30, font: { size: 18 } });
 
     // Track all files for wikilink resolution: name -> rel path
     const fileIndex = {}; // basename (lower, no ext) -> rel path
@@ -2039,7 +2039,7 @@ ${template !== "vite-blank" ? "- Componentes shadcn em `src/components/ui/` (But
     bmadBlock = `
 ## BMAD instalado
 
-\`_bmad/\` contém os agentes BMAD (analyst/pm/architect/designer/dev/qa/sm). Pra rodar via Jarvis Hub: ative o projeto em **Code mode** e use o botão \`🤖 BMAD ▾\` no project bar — gera artefatos em \`docs/<agent>.md\`.
+\`_bmad/\` contém os agentes BMAD (analyst/pm/architect/designer/dev/qa/sm). Pra rodar via Nook Studio: ative o projeto em **Code mode** e use o botão \`🤖 BMAD ▾\` no project bar — gera artefatos em \`docs/<agent>.md\`.
 `;
   }
 
@@ -2063,9 +2063,9 @@ ${template !== "vite-blank" ? "- Componentes shadcn em `src/components/ui/` (But
   })();
 
   const builderBlock = kind === "web" ? `
-## Builder (Jarvis Hub)
+## Builder (Nook Studio)
 
-Este projeto pode ter páginas visuais editadas no **Builder** do Jarvis Hub (modo Code → \`🧱 Builder\` ou Ctrl+B).
+Este projeto pode ter páginas visuais editadas no **Builder** do Nook Studio (modo Code → \`🧱 Builder\` ou Ctrl+B).
 
 Pages ficam em \`jarvis-pages/<nome>.page.json\`. Duas formas de consumir:
 
@@ -2078,7 +2078,7 @@ Pages têm formato: \`{ name, root: { id, type, props, children, events } }\`. 1
   const dbBlock = [
     "## Banco de dados",
     "",
-    "Banco deste projeto = **Supabase** (Postgres + Studio + Auth/Storage/Realtime), provisionado pelo Jarvis Hub. **SQLite é proibido** aqui (`node:sqlite`, `better-sqlite3`, `sql.js`, `.db`) e **não use Drizzle nem `pg` direto** — o acesso é via **`@supabase/supabase-js`**. (Quem usa SQLite é só o repo do Hub, não este projeto.)",
+    "Banco deste projeto = **Supabase** (Postgres + Studio + Auth/Storage/Realtime), provisionado pelo Nook Studio. **SQLite é proibido** aqui (`node:sqlite`, `better-sqlite3`, `sql.js`, `.db`) e **não use Drizzle nem `pg` direto** — o acesso é via **`@supabase/supabase-js`**. (Quem usa SQLite é só o repo do Hub, não este projeto.)",
     "",
     "- **Provisionar** (roda `supabase init`, sobe o Supabase local do projeto e escreve as keys no `.env`): clique no botão **🗄️ Banco** no Code mode, ou rode (use o **diretório-raiz** deste projeto, onde está o `package.json`):",
     "  `curl -s -X POST http://localhost:3000/api/code/db/provision -H 'Content-Type: application/json' -d '{\"path\":\"<dir absoluto deste projeto>\"}'`",
@@ -2104,7 +2104,7 @@ Instruções pra Claude Code (e outros assistentes IA) trabalhando neste projeto
 
 **${kindLabel}**${description ? `: ${description}` : ""}.
 
-Criado via Jarvis Hub${bmad ? " com BMAD instalado" : ""}. Metadata em \`.jarvis-project.json\`.
+Criado via Nook Studio${bmad ? " com BMAD instalado" : ""}. Metadata em \`.jarvis-project.json\`.
 ${stackBlock}${commandsBlock}
 ## Estrutura
 
@@ -2529,7 +2529,7 @@ async function postCreateEnrichProject({ name, target, description, kind, stack,
     else if (kind === "api") await scaffoldNodeApi({ name, target, send });
     else if (kind === "lib") await scaffoldNodeLib({ name, target, send });
   } catch (e) { send("stderr", { line: "[scaffold] " + e.message }); }
-  // 0.5) Inject Jarvis preview helpers (picker + runtime-error capture) into index.html
+  // 0.5) Inject Nook preview helpers (picker + runtime-error capture) into index.html
   try {
     if (injectJarvisScripts(target)) {
       send("status", { phase: "picker", message: "jarvis-picker.js + jarvis-errors.js injetados em index.html" });
@@ -2555,7 +2555,7 @@ async function postCreateEnrichProject({ name, target, description, kind, stack,
       if (!usedClaude) {
         const claudeMd = renderProjectClaudeMd({ name, description, kind, stack, bmad, template });
         fs.writeFileSync(claudePath, claudeMd);
-        send("status", { phase: "claude", message: "CLAUDE.md (template Jarvis) gravado — claude CLI não rodou" });
+        send("status", { phase: "claude", message: "CLAUDE.md (template Nook) gravado — claude CLI não rodou" });
       }
     }
   } catch (e) {
@@ -2884,7 +2884,7 @@ function _safeProjectPath(p) {
   return r;
 }
 
-// Inject the Jarvis preview helper scripts (picker + runtime-error capture) into
+// Inject the Nook preview helper scripts (picker + runtime-error capture) into
 // a project's index.html if missing. Runs at scaffold and on dev-server start,
 // so existing projects get the error-capture used by QA self-heal too.
 function injectJarvisScripts(targetDir) {
@@ -3500,7 +3500,7 @@ function ensureCanvasMount(projectPath, res) {
     const lines = ["__canvas.html", "src/__canvas_mount.tsx"];
     let needWrite = false;
     for (const ln of lines) {
-      if (!gi.split(/\r?\n/).includes(ln)) { gi += (gi.endsWith("\n") || gi === "" ? "" : "\n") + "\n# Jarvis Canvas (dev only)\n" + ln + "\n"; needWrite = true; break; }
+      if (!gi.split(/\r?\n/).includes(ln)) { gi += (gi.endsWith("\n") || gi === "" ? "" : "\n") + "\n# Nook Canvas (dev only)\n" + ln + "\n"; needWrite = true; break; }
     }
     if (needWrite) {
       // re-add any missing lines after the section header was created
@@ -3517,7 +3517,7 @@ function ensureCanvasMount(projectPath, res) {
   }
 }
 
-const CANVAS_MOUNT_TSX = `// AUTO-GENERATED by Jarvis Hub Canvas. Loaded by __canvas.html in dev only.
+const CANVAS_MOUNT_TSX = `// AUTO-GENERATED by Nook Studio Canvas. Loaded by __canvas.html in dev only.
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
@@ -3557,7 +3557,7 @@ const CANVAS_MOUNT_HTML = `<!doctype html>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Jarvis Canvas Mount</title>
+    <title>Nook Canvas Mount</title>
   </head>
   <body>
     <div id="root"></div>
@@ -5375,7 +5375,7 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log(`Jarvis Hub rodando em http://localhost:${PORT}`);
+  console.log(`Nook Studio rodando em http://localhost:${PORT}`);
   setImmediate(() => runStartupDiagnostics().catch(() => {}));
 });
 
