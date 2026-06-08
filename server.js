@@ -17,20 +17,8 @@ const codeDb = require("./lib/code/db");
 const codeScaffold = require("./lib/code/scaffold");
 const codePreamble = require("./lib/workers/providers/_preamble");
 
-// Drizzle Studio (GUI de tabelas) — um por vez, na 4983; aponta pro banco _dev.
-let _studio = { proc: null, path: null, startedAt: 0 };
-function startDrizzleStudio(safePath, name) {
-  if (_studio.proc && _studio.path === safePath) return { ok: true, url: "https://local.drizzle.studio", already: true };
-  if (_studio.proc) { try { _studio.proc.kill("SIGTERM"); } catch {} _studio = { proc: null, path: null, startedAt: 0 }; }
-  const databaseUrl = codeDb.connString(name, "dev");
-  const proc = spawn("npx", ["drizzle-kit", "studio", "--host", "127.0.0.1", "--port", "4983"], {
-    cwd: safePath, env: { ...process.env, DATABASE_URL: databaseUrl }, stdio: ["ignore", "pipe", "pipe"],
-  });
-  _studio = { proc, path: safePath, startedAt: Date.now() };
-  const clear = () => { if (_studio.proc === proc) _studio = { proc: null, path: null, startedAt: 0 }; };
-  proc.on("exit", clear); proc.on("error", clear);
-  return { ok: true, url: "https://local.drizzle.studio" };
-}
+// Inspeção de banco = Supabase Studio (sobe com o stack do projeto). Ver
+// codeDb.studio() — não há mais GUI interna.
 const planLib = require("./lib/plan");
 const profileLib = require("./lib/profile");
 const UPLOADS_DIR = path.join(__dirname, "uploads");
@@ -2090,19 +2078,22 @@ Pages têm formato: \`{ name, root: { id, type, props, children, events } }\`. 1
   const dbBlock = [
     "## Banco de dados",
     "",
-    "Banco deste projeto = **Postgres**, provisionado pelo Jarvis Hub. **SQLite é proibido** aqui (`node:sqlite`, `better-sqlite3`, `sql.js`, arquivos `.db` locais) — não improvise um `db.js`/`server/db.js` nem escreva conexão na mão. (Quem usa SQLite é só o repo do Hub, não este projeto.)",
+    "Banco deste projeto = **Supabase** (Postgres + Studio + Auth/Storage/Realtime), provisionado pelo Jarvis Hub. **SQLite é proibido** aqui (`node:sqlite`, `better-sqlite3`, `sql.js`, `.db`) e **não use Drizzle nem `pg` direto** — o acesso é via **`@supabase/supabase-js`**. (Quem usa SQLite é só o repo do Hub, não este projeto.)",
     "",
-    "- **Provisionar** (cria `<proj>_dev` + `<proj>_prod` no Postgres compartilhado e faz scaffold Drizzle): clique no botão **🗄️ Banco** no Code mode, ou rode (use o **diretório-raiz** deste projeto, onde está o `package.json`):",
+    "- **Provisionar** (roda `supabase init`, sobe o Supabase local do projeto e escreve as keys no `.env`): clique no botão **🗄️ Banco** no Code mode, ou rode (use o **diretório-raiz** deste projeto, onde está o `package.json`):",
     "  `curl -s -X POST http://localhost:3000/api/code/db/provision -H 'Content-Type: application/json' -d '{\"path\":\"<dir absoluto deste projeto>\"}'`",
-    "  Gera `db/index.ts`, `db/schema.ts`, `drizzle.config.ts`, os `.env.development`/`.env.production` e adiciona `drizzle-orm`, `pg`, `drizzle-kit`. Confira o retorno (`{\"ok\":true}` = ok).",
-    "- **No código:** importe o cliente de `db/index.ts` e leia a connection string de `process.env.DATABASE_URL` (o `npm run dev` injeta o banco `_dev` automaticamente). **Nunca hardcode** credenciais nem connection string.",
-    "- **Schema:** defina tabelas em `db/schema.ts`.",
-    "- **Migrations** (via Hub, não rode `psql`/`drizzle-kit` à mão):",
-    "  - generate: `curl -s -X POST http://localhost:3000/api/code/db/generate -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\"}'`",
-    "  - aplicar no dev: `curl -s -X POST http://localhost:3000/api/code/db/migrate -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\",\"env\":\"dev\"}'`",
-    "  - promover pro prod: `curl -s -X POST http://localhost:3000/api/code/db/promote -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\"}'`",
-    "  - status: `curl -s 'http://localhost:3000/api/code/db/status?path=<dir>'`",
-    "- **Migrando de SQLite:** se este projeto ainda tiver SQLite, rode `/provision`, porte as tabelas pra `db/schema.ts`, troque os imports pro `db/index.ts` + `process.env.DATABASE_URL`, e remova o adapter, a dep e os arquivos `.db`.",
+    "  Adiciona `@supabase/supabase-js`, gera `lib/supabase.ts` e cria `supabase/` (config + migrations). Confira `{\"ok\":true}`.",
+    "- **No código:** importe `supabase` de `lib/supabase.ts` (lê `SUPABASE_URL`/`SUPABASE_ANON_KEY` do ambiente — o `.env` é preenchido no provisionamento). **Nunca hardcode** URL nem keys.",
+    "- **Ferramentas = Supabase MCP** (no `.mcp.json` do projeto, ligado após o provision). PREFIRA as tools dele: `apply_migration` pra mudança de schema (vira migration reproduzível), `execute_sql` pra query, `list_tables`, `generate_typescript_types`, `get_logs`, `get_advisors`. Use `apply_migration` (não `execute_sql`) pra DDL.",
+    "- **Schema = migrations SQL do Supabase** (fonte oficial em `supabase/migrations/`). NÃO altere tabelas na mão pelo Studio (é sobrescrito). FALLBACK sem MCP, via Hub:",
+    "  - nova migration: `curl -s -X POST http://localhost:3000/api/code/db/generate -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\",\"name\":\"cria_tabela_x\"}'` (cria o arquivo SQL; escreva o DDL nele)",
+    "  - capturar do Studio: `curl -s -X POST http://localhost:3000/api/code/db/diff -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\",\"name\":\"<mudança>\"}'` (se o usuário criou tabelas VISUAL no Studio: gera a migration do diff sozinho)",
+    "  - aplicar no dev: `curl -s -X POST http://localhost:3000/api/code/db/migrate -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\"}'`",
+    "  - promover pro prod (projeto Supabase linkado): `curl -s -X POST http://localhost:3000/api/code/db/promote -H 'Content-Type: application/json' -d '{\"path\":\"<dir>\"}'`",
+    "  - status/keys: `curl -s 'http://localhost:3000/api/code/db/status?path=<dir>'`",
+    "- **Inspeção dos dados = Supabase Studio** (não há tela interna): `POST /api/code/db/studio` com `{\"path\":\"<dir>\"}` devolve a URL do Studio.",
+    "- **Tempo real** (front atualiza ao vivo, sem reload): habilite a tabela no publication via migration (`alter publication supabase_realtime add table public.<tabela>;`) e, no front, assine com `supabase.channel('x').on('postgres_changes', { event:'*', schema:'public', table:'<tabela>' }, () => refetch()).subscribe()`. Use as keys `VITE_*`/`NEXT_PUBLIC_*` (já no `.env`).",
+    "- **Migrando de SQLite/Postgres-cru:** rode `/provision`, porte as tabelas pra migrations em `supabase/migrations/`, troque os imports pro `lib/supabase.ts`, e remova o adapter antigo, a dep e os `.db`.",
   ].join("\n");
 
   return `# CLAUDE.md — ${name}
@@ -2927,13 +2918,9 @@ function startDevServer(projectPath) {
   const existing = devServers.get(safe);
   if (existing && existing.proc) return { ok: true, message: "ja rodando", state: getDevServerState(safe) };
 
-  // Injeção de DATABASE_URL=dev estilo Replit: se o projeto foi provisionado
-  // (tem .env.development), o dev server aponta pro banco <proj>_dev.
-  const devEnv = { ...process.env, FORCE_COLOR: "0", BROWSER: "none" };
-  if (fs.existsSync(path.join(safe, ".env.development"))) {
-    devEnv.DATABASE_URL = codeDb.connString(path.basename(safe), "dev");
-    devEnv.NODE_ENV = "development";
-  }
+  // O dev server (Vite/Next) carrega o .env do projeto sozinho — SUPABASE_URL e as
+  // keys são escritas no provisionamento. Sem injeção de credencial aqui.
+  const devEnv = { ...process.env, FORCE_COLOR: "0", BROWSER: "none", NODE_ENV: "development" };
   // Full-stack: se há "dev:all" (ex: concurrently api+web), roda ele pra subir o
   // backend junto — senão a API do projeto nunca sobe e o app fica só no localStorage.
   const devScript = (pkg.scripts && pkg.scripts["dev:all"]) ? "dev:all" : "dev";
@@ -4903,8 +4890,10 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
         const safe = _safeProjectPath(d.path);
         if (!safe) throw new Error("Caminho invalido (so projetos em ~/dev/projetos)");
         const name = path.basename(safe);
-        const dbInfo = await codeDb.provision(name);
-        const scaffold = codeScaffold.scaffoldDrizzle(safe, name);
+        const scaffold = codeScaffold.scaffoldSupabase(safe, name);
+        const dbInfo = await codeDb.provision(safe, name);
+        if (!dbInfo.ok) throw new Error(dbInfo.error || "provision falhou");
+        codeScaffold.writeEnvFiles(safe, "dev", dbInfo);
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ ok: true, db: dbInfo, scaffold }));
       } catch (e) {
@@ -4918,13 +4907,13 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
     const u = new URL(req.url, "http://localhost");
     const safe = _safeProjectPath(u.searchParams.get("path") || "");
     if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
-    codeDb.status(path.basename(safe)).then((st) => {
+    codeDb.status(safe).then((st) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify(st));
     }).catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
     return;
   }
-  if ((req.url === "/api/code/db/migrate" || req.url === "/api/code/db/generate" || req.url === "/api/code/db/promote") && req.method === "POST") {
+  if ((req.url === "/api/code/db/migrate" || req.url === "/api/code/db/generate" || req.url === "/api/code/db/promote" || req.url === "/api/code/db/diff") && req.method === "POST") {
     let body = ""; req.on("data", c => body += c);
     req.on("end", async () => {
       try {
@@ -4933,9 +4922,10 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
         if (!safe) throw new Error("Caminho invalido");
         const name = path.basename(safe);
         let r;
-        if (req.url.endsWith("/generate")) r = await codeScaffold.runDrizzle(safe, name, "dev", "generate");
-        else if (req.url.endsWith("/promote")) r = await codeScaffold.runDrizzle(safe, name, "prod", "migrate");
-        else r = await codeScaffold.runDrizzle(safe, name, d.env === "prod" ? "prod" : "dev", "migrate");
+        if (req.url.endsWith("/generate")) r = await codeDb.migrationNew(safe, d.name || name);
+        else if (req.url.endsWith("/diff")) r = await codeDb.dbDiff(safe, d.name || "schema");
+        else if (req.url.endsWith("/promote")) r = await codeDb.promote(safe);
+        else r = await codeDb.migrate(safe);
         res.writeHead(r.ok ? 200 : 500, { "Content-Type": "application/json" });
         res.end(JSON.stringify(r));
       } catch (e) {
@@ -4946,88 +4936,32 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
     return;
   }
 
-  if (req.url.startsWith("/api/code/db/tables") && req.method === "GET") {
-    const u = new URL(req.url, "http://localhost");
-    const safe = _safeProjectPath(u.searchParams.get("path") || "");
-    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
-    const env = u.searchParams.get("env") === "prod" ? "prod" : "dev";
-    codeDb.listTables(path.basename(safe), env)
-      .then((r) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(r)); })
-      .catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
-    return;
-  }
-  if (req.url.startsWith("/api/code/db/rows") && req.method === "GET") {
-    const u = new URL(req.url, "http://localhost");
-    const safe = _safeProjectPath(u.searchParams.get("path") || "");
-    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
-    const env = u.searchParams.get("env") === "prod" ? "prod" : "dev";
-    codeDb.getRows(path.basename(safe), env, u.searchParams.get("table") || "", u.searchParams.get("limit"), u.searchParams.get("offset"))
-      .then((r) => { res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" }); res.end(JSON.stringify(r)); })
-      .catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
-    return;
-  }
-  if (req.url === "/api/code/db/studio" && req.method === "POST") {
+  if (req.url === "/api/code/db/link" && req.method === "POST") {
     let body = ""; req.on("data", c => body += c);
-    req.on("end", () => {
+    req.on("end", async () => {
       try {
         const d = JSON.parse(body || "{}");
         const safe = _safeProjectPath(d.path);
         if (!safe) throw new Error("Caminho invalido");
-        const r = startDrizzleStudio(safe, path.basename(safe));
-        res.writeHead(200, { "Content-Type": "application/json" });
+        const r = await codeDb.link(safe, d.ref);
+        res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
         res.end(JSON.stringify(r));
       } catch (e) { res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); }
     });
     return;
   }
 
-  if (req.url.startsWith("/api/code/db/columns") && req.method === "GET") {
-    const u = new URL(req.url, "http://localhost");
-    const safe = _safeProjectPath(u.searchParams.get("path") || "");
-    if (!safe) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ error: "path invalido" })); }
-    const env = u.searchParams.get("env") === "prod" ? "prod" : "dev";
-    codeDb.getColumns(path.basename(safe), env, u.searchParams.get("table") || "")
-      .then((r) => { res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" }); res.end(JSON.stringify(r)); })
-      .catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
-    return;
-  }
-  if (req.url === "/api/code/db/row" && (req.method === "POST" || req.method === "PATCH" || req.method === "DELETE")) {
+  if (req.url === "/api/code/db/studio" && req.method === "POST") {
     let body = ""; req.on("data", c => body += c);
     req.on("end", async () => {
       try {
         const d = JSON.parse(body || "{}");
         const safe = _safeProjectPath(d.path);
-        if (!safe) throw new Error("Caminho invalido (so projetos em ~/dev/projetos)");
-        const name = path.basename(safe);
-        const env = d.env === "prod" ? "prod" : "dev";
-        let r;
-        if (req.method === "POST") r = await codeDb.insertRow(name, env, d.table, d.values || {});
-        else if (req.method === "PATCH") r = await codeDb.updateRow(name, env, d.table, d.pk || {}, d.values || {});
-        else r = await codeDb.deleteRow(name, env, d.table, d.pk || {});
-        res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
+        if (!safe) throw new Error("Caminho invalido");
+        const r = await codeDb.studio(safe, path.basename(safe));
+        res.writeHead(r.ok ? 200 : 500, { "Content-Type": "application/json" });
         res.end(JSON.stringify(r));
-      } catch (e) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: e.message }));
-      }
-    });
-    return;
-  }
-  if (req.url === "/api/code/db/sql" && req.method === "POST") {
-    let body = ""; req.on("data", c => body += c);
-    req.on("end", async () => {
-      try {
-        const d = JSON.parse(body || "{}");
-        const safe = _safeProjectPath(d.path);
-        if (!safe) throw new Error("Caminho invalido (so projetos em ~/dev/projetos)");
-        const env = d.env === "prod" ? "prod" : "dev";
-        const r = await codeDb.runSql(path.basename(safe), env, d.sql || "");
-        res.writeHead(r.ok ? 200 : 400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify(r));
-      } catch (e) {
-        res.writeHead(400, { "Content-Type": "application/json" });
-        res.end(JSON.stringify({ error: e.message }));
-      }
+      } catch (e) { res.writeHead(400, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); }
     });
     return;
   }
