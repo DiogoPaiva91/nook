@@ -592,17 +592,39 @@
     }
     .bmad-bar.active { display: flex; }
     .bmad-bar-label { font-size: 11px; color: var(--text-dim); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    .bmad-bar-cancel { font-size: 11px; color: #ef4444; cursor: pointer; margin-left: auto; background: none; border: none; }
+    .bmad-bar-cancel {
+      font: inherit; font-size: 11px; color: var(--text-muted); cursor: pointer;
+      margin-left: auto; background: none; border: none; padding: 4px 8px; border-radius: var(--radius-sm);
+      transition: color .12s, background .12s;
+    }
+    .bmad-bar-cancel:hover { color: var(--danger); background: rgba(229,77,46,0.1); }
+
+    /* ── BMAD mode toggle (segmented) ── */
+    .bmad-mode-toggle {
+      display: inline-flex; gap: 2px; margin: 0 4px;
+      padding: 2px; background: var(--bg);
+      border: 1px solid var(--border); border-radius: 6px;
+    }
+    .bmad-mode-btn {
+      font: inherit; font-size: 11px; font-weight: 600;
+      padding: 3px 10px; border-radius: var(--radius-sm); cursor: pointer;
+      background: transparent; border: 1px solid transparent; color: var(--text-muted);
+      transition: color .12s, background .12s;
+    }
+    .bmad-mode-btn:hover { color: var(--text-dim); }
+    .bmad-mode-btn.on { background: var(--surface2); color: var(--accent); }
 
     /* ── BMAD Pipeline ── */
     .bmad-step {
       display: inline-flex; align-items: center; gap: 5px;
       padding: 6px 12px; border-radius: 8px; font-size: 12px;
       background: var(--surface2); border: 1px solid var(--border); color: var(--text-dim);
+      transition: border-color .12s, color .12s, background .12s;
     }
+    .bmad-step:hover { border-color: var(--text-muted); }
     .bmad-step.active { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
-    .bmad-step.done { border-color: #10b981; color: #10b981; }
-    .bmad-step.error { border-color: #ef4444; color: #ef4444; }
+    .bmad-step.done { border-color: var(--success); color: var(--success); }
+    .bmad-step.error { border-color: var(--danger); color: var(--danger); }
     .bmad-step-icon { font-size: 14px; }
     .bmad-step-status { font-size: 12px; margin-left: 2px; }
 
@@ -632,13 +654,15 @@
     /* ── Center view toggle (Editor / Preview / Canvas / Git) — underline, igual .code-tab ── */
     .center-view-tab {
       background: transparent; border: none;
-      color: var(--text-muted); padding: 5px 14px; cursor: pointer;
+      color: var(--text-muted); padding: 5px 12px; cursor: pointer;
       font-size: 11px; font-weight: 500;
       border-bottom: 2px solid transparent;
       transition: color 0.12s, border-color 0.12s;
+      display: inline-flex; align-items: center; gap: 6px;
     }
+    .center-view-tab svg { width: 14px; height: 14px; flex: 0 0 auto; }
     .center-view-tab:hover { color: var(--text); }
-    .center-view-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .center-view-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
     #codeCenterViewToggle {
       position: absolute; left: 50%; top: 50%;
       transform: translate(-50%, -50%);
@@ -700,15 +724,34 @@
     .banco-card:hover .banco-card-ic { background: var(--surface); }
     .banco-card-t { grid-column: 2; font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
     .banco-card-s { grid-column: 2; font-size: 11px; color: var(--text-muted); line-height: 1.3; }
+    /* Secrets — responsivo (flex-wrap: em tela estreita o valor/ações quebram pra próxima linha) */
+    .secret-row { display: flex; align-items: center; gap: 7px; padding: 6px 0; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+    .secret-key { flex: 0 1 auto; min-width: 90px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-family: ui-monospace, monospace; }
+    .secret-badge { flex: 0 0 auto; font-size: 10px; padding: 1px 6px; border-radius: 8px; background: var(--surface2); color: var(--text-muted); }
+    .secret-val { flex: 1 1 200px; min-width: 130px; padding: 5px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-family: ui-monospace, monospace; outline: none; }
+    .secret-actions { flex: 0 0 auto; display: flex; gap: 4px; margin-left: auto; }
+    .secret-actions .pbar-btn { padding: 5px 7px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-muted); }
+    .secret-actions .pbar-btn:hover { color: var(--text); }
+    .secret-actions .pbar-btn.is-danger:hover { color: #ef4444; }
+    .secret-actions svg { width: 15px; height: 15px; display: block; }
+    .secret-add { display: flex; gap: 7px; margin-top: 14px; flex-wrap: wrap; }
+    .secret-add .secret-newkey { flex: 1 1 150px; min-width: 130px; }
+    .secret-add .secret-newval { flex: 2 1 200px; min-width: 150px; }
+    .secret-add .secret-addbtn { flex: 0 0 auto; }
+    .secret-add input { padding: 7px 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text); font-size: 12px; font-family: ui-monospace, monospace; outline: none; }
+    /* Git pane — botões/ícones padrão */
+    .gitbtn { display: inline-flex; align-items: center; gap: 5px; background: transparent; border: 1px solid var(--border); color: var(--text-muted); padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 500; transition: color .12s, border-color .12s, background .12s; }
+    .gitbtn:hover { color: var(--text); border-color: var(--accent); }
+    .gitbtn.is-primary { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+    .gitbtn svg { width: 13px; height: 13px; flex: 0 0 auto; }
+    .git-branch-chip { display: inline-flex; align-items: center; gap: 6px; color: var(--accent); font-weight: 600; }
+    .git-branch-chip svg { width: 14px; height: 14px; }
+    .git-file-st { flex: 0 0 auto; width: 18px; height: 16px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 9px; font-weight: 700; }
 
     /* "Live" affordance on the central Preview button when dev server is running but user is in editor view */
     @keyframes preview-live-dot {
       0%, 100% { opacity: 1; }
       50%      { opacity: 0.3; }
-    }
-    #centerViewPreviewBtn.center-preview-live {
-      color: #22c55e !important;
-      border-bottom-color: rgba(34,197,94,0.5) !important;
     }
     #centerViewPreviewBtn.center-preview-live::before {
       content: "● ";
@@ -1528,10 +1571,6 @@
         </span>
       </div>
       <div id="fileTree" style="flex:1;overflow-y:auto;font-size:12px;padding-top:4px;min-height:0" oncontextmenu="if(event.target===this){event.preventDefault();openCtxMenu(event,PROJECT_ROOT,true)}"></div>
-      <div class="section-header" style="margin-top:8px">
-        <span class="section-label">Git</span>
-      </div>
-      <div id="gitStatus" style="font-size:11px;overflow-y:auto;max-height:100px;padding:4px 0"></div>
     </div>
     <div class="j-resize-h" data-resize="codeLeft" title="Arrastar pra redimensionar"></div>
     <!-- Code Main (editor + terminal) -->
@@ -1539,11 +1578,12 @@
       <!-- Project quick-bar -->
       <div id="codeProjectBar" style="position:relative;display:flex;align-items:center;gap:10px;padding:5px 12px;background:var(--surface2);border-bottom:1px solid var(--border);font-size:11px;flex-wrap:wrap;container-type:inline-size;container-name:codeBar">
         <div id="codeCenterViewToggle">
-          <button id="centerViewEditorBtn" onclick="setCodeCenterView('editor')" class="center-view-tab active">Editor</button>
-          <button id="centerViewPreviewBtn" onclick="setCodeCenterView('preview')" class="center-view-tab">Preview</button>
-          <button id="centerViewCanvasBtn" onclick="setCodeCenterView('canvas')" title="Ver todas as telas/componentes" class="center-view-tab">Canvas</button>
-          <button id="centerViewGitBtn" onclick="setCodeCenterView('git')" title="Git: pull, push, historico" class="center-view-tab">Git</button>
-          <button id="centerViewBancoBtn" onclick="setCodeCenterView('banco')" title="Banco — abre o Supabase Studio" class="center-view-tab" style="display:none">Banco</button>
+          <button id="centerViewEditorBtn" onclick="setCodeCenterView('editor')" class="center-view-tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>Editor</button>
+          <button id="centerViewPreviewBtn" onclick="setCodeCenterView('preview')" class="center-view-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>Prévia</button>
+          <button id="centerViewCanvasBtn" onclick="setCodeCenterView('canvas')" title="Ver todas as telas/componentes" class="center-view-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>Telas</button>
+          <button id="centerViewGitBtn" onclick="setCodeCenterView('git')" title="Git: pull, push, historico" class="center-view-tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>Git</button>
+          <button id="centerViewBancoBtn" onclick="setCodeCenterView('banco')" title="Banco — abre o Supabase Studio" class="center-view-tab" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Banco</button>
+          <button id="centerViewSecretsBtn" onclick="setCodeCenterView('secrets')" title="Secrets — variáveis e chaves do projeto (.env)" class="center-view-tab" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>Segredos</button>
         </div>
         <button onclick="openProjectSwitcher()" id="codeProjectBtn" title="Trocar projeto" class="pbar-btn">
           <span>📁</span><span id="codeProjectBtnName">Nook</span><span style="color:var(--text-muted)">▾</span>
@@ -1657,7 +1697,6 @@
           <button id="previewFwdBtn" onclick="previewNavForward()" class="pbar-btn" title="Avancar" disabled style="display:none;opacity:0.45">&#8594;</button>
           <input id="previewEntry" type="text" placeholder="index.html" onkeydown="handlePreviewBarKey(event)" onfocus="handlePreviewBarFocus(event)" style="flex:1;min-width:90px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:4px;font-size:11px">
           <button onclick="reloadPreview()" class="pbar-btn" title="Recarregar">&#x21bb;</button>
-          <button id="previewReadUrlBtn" onclick="previewReadIframeUrl()" class="pbar-btn" title="Ler URL atual do iframe (so funciona se mesma origem)" style="display:none">&#128205;</button>
           <button onclick="openPreviewInNewTab()" class="pbar-btn" title="Abrir em nova aba">&#8599;</button>
         </div>
         <div id="previewErrorBanner" style="display:none;background:#7f1d1d;border-bottom:1px solid #ef4444;color:#fecaca;padding:8px 12px;font-size:11px;display:flex;align-items:center;gap:10px;cursor:pointer" onclick="openDevServerLogs()">
@@ -1694,19 +1733,26 @@
               <span>Mudanças</span>
               <span id="gitPaneChangesCount" style="color:var(--accent)"></span>
               <span style="flex:1"></span>
-              <button onclick="gitCommitDialog()" id="gitPaneCommitBtn" title="Commit" style="background:transparent;border:1px solid var(--border);color:#22c55e;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px">💾 Commit</button>
-              <button onclick="gitShowDiff()" id="gitPaneDiffBtn" title="Diff" style="background:transparent;border:1px solid var(--border);color:#eab308;padding:3px 8px;border-radius:4px;cursor:pointer;font-size:10px">🔍 Diff</button>
+              <button onclick="gitCommitDialog()" id="gitPaneCommitBtn" class="gitbtn is-primary" title="Commit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/></svg>Commit</button>
+              <button onclick="gitShowDiff()" id="gitPaneDiffBtn" class="gitbtn" title="Diff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/></svg>Diff</button>
             </div>
             <div id="gitPaneChanges" style="flex:1;overflow:auto;padding:6px 0;font-size:11px"></div>
           </div>
           <div style="flex:2;min-width:0;display:flex;flex-direction:column;overflow:hidden">
-            <div style="padding:8px 14px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600">Histórico de Commits</div>
+            <div style="padding:8px 14px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600;display:flex;align-items:center;gap:8px">
+              <span>Histórico de Commits</span>
+              <span style="flex:1"></span>
+              <button onclick="gitUndoLastCommit()" class="gitbtn" style="text-transform:none;letter-spacing:0" title="Remove o último commit, mantendo as mudanças"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>Desfazer último</button>
+            </div>
             <div id="gitPaneLog" style="flex:1;overflow:auto;font-size:12px"></div>
           </div>
         </div>
       </div>
       <div id="codeBancoPanel" style="flex:1;min-height:0;display:none;flex-direction:column;background:var(--bg);overflow:hidden">
         <div id="codeBancoBody" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:hidden"></div>
+      </div>
+      <div id="codeSecretsPanel" style="flex:1;min-height:0;display:none;flex-direction:column;background:var(--bg);overflow:hidden">
+        <div id="codeSecretsBody" style="flex:1;display:flex;flex-direction:column;min-height:0;overflow:auto"></div>
       </div>
     </div>
     <!-- Command Palette (Ctrl+K) -->
@@ -1919,15 +1965,13 @@
   </div>
 
   <!-- Code: New Project Modal -->
-  <div id="newProjectOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;align-items:center;justify-content:center" onclick="if(event.target===this)closeNewProjectModal()">
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;width:560px;max-width:92vw;max-height:90vh;overflow-y:auto;padding:20px">
-      <div style="font-size:15px;font-weight:600;margin-bottom:14px;color:var(--text)">&#128666; Novo projeto</div>
+  <template id="newProjectFormTpl">
       <div style="margin-bottom:12px">
         <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:6px">Origem</label>
-        <div id="newProjectSourceTabs" style="display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px">
-          <button type="button" data-src="scaffold" onclick="setNewProjectSource('scaffold')" style="flex:1;background:var(--accent);border:none;color:white;padding:6px 8px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500">&#128640; Scaffold</button>
-          <button type="button" data-src="local" onclick="setNewProjectSource('local')" style="flex:1;background:transparent;border:none;color:var(--text-muted);padding:6px 8px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500">&#128193; Pasta local</button>
-          <button type="button" data-src="github" onclick="setNewProjectSource('github')" style="flex:1;background:transparent;border:none;color:var(--text-muted);padding:6px 8px;border-radius:4px;cursor:pointer;font-size:12px;font-weight:500">&#128280; GitHub</button>
+        <div id="newProjectSourceTabs" class="banco-seg" style="display:flex;width:100%">
+          <button type="button" class="banco-seg-btn is-on" data-src="scaffold" onclick="setNewProjectSource('scaffold')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg>Scaffold</button>
+          <button type="button" class="banco-seg-btn" data-src="local" onclick="setNewProjectSource('local')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Pasta local</button>
+          <button type="button" class="banco-seg-btn" data-src="github" onclick="setNewProjectSource('github')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>GitHub</button>
         </div>
       </div>
       <div style="margin-bottom:12px">
@@ -1938,7 +1982,7 @@
         <label style="display:block;font-size:11px;color:var(--text-muted);margin-bottom:4px">Caminho local *</label>
         <div style="display:flex;gap:6px">
           <input id="newProjectLocalPath" type="text" placeholder="/home/diogo/projetos-antigos/meu-app" style="flex:1;padding:8px 10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:13px;font-family:ui-monospace,monospace;box-sizing:border-box">
-          <button type="button" onclick="openFolderPicker()" title="Navegar pastas" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap">&#128193; Procurar</button>
+          <button type="button" onclick="openFolderPicker()" title="Navegar pastas" style="display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px;white-space:nowrap"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Procurar</button>
         </div>
         <div style="font-size:10px;color:var(--text-muted);margin-top:3px">Conte&uacute;do sera copiado pra ~/dev/projetos/&lt;nome&gt;. Origem precisa estar fora de ~/dev/projetos/.</div>
       </div>
@@ -1994,12 +2038,7 @@
         <div style="font-size:11px;color:var(--text-muted);margin-top:2px;margin-left:24px">Demora 30-60s. Precisa de descrição preenchida.</div>
       </div>
       <div id="newProjectStatus" style="font-size:12px;margin-bottom:10px;min-height:16px"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end">
-        <button onclick="closeNewProjectModal()" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px">Cancelar</button>
-        <button id="newProjectConfirmBtn" onclick="confirmNewProject()" style="background:var(--accent);border:none;color:white;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500">Criar</button>
-      </div>
-    </div>
-  </div>
+  </template>
 
   <!-- Folder Picker Modal (navegador de pastas pra "Pasta local") -->
   <div id="folderPickerOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:10000;align-items:center;justify-content:center" onclick="if(event.target===this)closeFolderPicker()">
@@ -4912,7 +4951,7 @@ function renderCodeProjects() {
   let html = '<div class="asst-item' + (nookActive ? " active" : "") + '" style="cursor:pointer;padding:6px 8px;border-radius:6px;display:flex;gap:8px;align-items:center;margin:1px 0" '
     + 'onclick="setCodeProject(\'/home/diogo/dev/nook\', \'nook\')">'
     + '<span class="asst-dot" style="background:var(--accent)"></span>'
-    + '<div class="asst-info"><div class="asst-name">Nook (interno)</div><div class="asst-desc" style="font-size:10px">~/dev/nook</div></div>'
+    + '<div class="asst-info"><div class="asst-name">NookStudio</div><div class="asst-desc" style="font-size:10px">~/dev/nook</div></div>'
     + '</div>';
   if (!codeProjects.length) {
     html += '<div style="color:var(--text-muted);padding:8px;font-size:11px;font-style:italic">Nenhum projeto. Click em + para criar.</div>';
@@ -5455,6 +5494,113 @@ function bancoInspectModal(data) {
       + '</div>' + banner + tablesHtml,
     actions: [{ label: "Fechar", kind: "accent", onClick: function (mm) { mm.close(); } }],
   });
+}
+
+// ── Secrets (gerenciador visual do .env / .env.production do projeto) ──
+const Secrets = { env: "dev" };
+function _secretsGet(env) {
+  const qs = new URLSearchParams({ path: PROJECT_ROOT, env: env }).toString();
+  return fetch("/api/code/secrets?" + qs).then(function (r) { return r.json(); });
+}
+function _secretsPost(action, payload) {
+  const url = action === "delete" ? "/api/code/secrets/delete" : "/api/code/secrets";
+  return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(Object.assign({ path: PROJECT_ROOT, env: Secrets.env }, payload || {})) }).then(function (r) { return r.json(); });
+}
+async function initSecretsPane() {
+  const host = document.getElementById("codeSecretsBody");
+  if (!host) return;
+  if (typeof PROJECT_ROOT === "undefined" || !PROJECT_ROOT || PROJECT_ROOT === "/home/diogo/dev/nook") {
+    host.innerHTML = '<div style="padding:30px;color:var(--text-muted);font-size:13px">Secrets é por-projeto. Abra um projeto em <code>~/dev/projetos</code>.</div>';
+    return;
+  }
+  Secrets.env = "dev";
+  secretsRender(host);
+}
+function _secretIcon(key) {
+  const P = {
+    eye: '<path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>',
+    "eye-off": '<path d="M9.88 9.88a3 3 0 0 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/>',
+    copy: '<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+    edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+    check: '<polyline points="20 6 9 17 4 12"/>',
+    trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>',
+    plus: '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  };
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[key] || "") + '</svg>';
+}
+async function secretsRender(host) {
+  if (!host) host = document.getElementById("codeSecretsBody");
+  if (!host) return;
+  host.innerHTML = '<div style="padding:18px 22px;color:var(--text-muted);font-size:12px">carregando…</div>';
+  let r; try { r = await _secretsGet(Secrets.env); } catch (e) { r = { ok: false, error: e.message }; }
+  const seg = '<div class="banco-seg" style="margin-bottom:12px">'
+    + '<button class="banco-seg-btn' + (Secrets.env === "dev" ? " is-on" : "") + '" data-env="dev">Dev (.env)</button>'
+    + '<button class="banco-seg-btn' + (Secrets.env === "prod" ? " is-on" : "") + '" data-env="prod">Prod (.env.production)</button>'
+    + '</div>';
+  let rows;
+  if (!r || r.ok === false) rows = '<div style="color:#ef4444;font-size:12px">Falhou: ' + escapeHtml((r && r.error) || "erro") + '</div>';
+  else if (!r.secrets.length) rows = '<div style="color:var(--text-muted);font-size:12px;padding:8px 0">' + (r.exists ? "Nenhuma secret ainda." : "O arquivo <code>" + escapeHtml(r.file) + "</code> ainda não existe — adicione uma secret pra criá-lo.") + '</div>';
+  else rows = r.secrets.map(function (s) {
+    return '<div class="secret-row" data-key="' + escapeHtml(s.key) + '">'
+      + '<code class="secret-key" title="' + escapeHtml(s.key) + '">' + escapeHtml(s.key) + '</code>'
+      + (s.managed ? '<span class="secret-badge" title="gerada no provisionamento — re-provisionar sobrescreve">auto</span>' : '')
+      + '<input class="secret-val" type="password" readonly>'
+      + '<span class="secret-actions">'
+      +   '<button class="secret-eye pbar-btn" title="revelar / ocultar">' + _secretIcon("eye") + '</button>'
+      +   '<button class="secret-copy pbar-btn" title="copiar">' + _secretIcon("copy") + '</button>'
+      +   '<button class="secret-edit pbar-btn" title="editar valor">' + _secretIcon("edit") + '</button>'
+      +   '<button class="secret-del pbar-btn is-danger" title="apagar">' + _secretIcon("trash") + '</button>'
+      + '</span>'
+      + '</div>';
+  }).join("");
+  const add = '<div class="secret-add">'
+    + '<input id="secretNewKey" class="secret-newkey" placeholder="NOVA_CHAVE" spellcheck="false" autocomplete="off">'
+    + '<input id="secretNewVal" class="secret-newval" placeholder="valor" spellcheck="false" autocomplete="off">'
+    + '<button id="secretAdd" class="secret-addbtn pbar-btn" style="color:var(--accent);border-color:var(--accent-soft);background:var(--accent-soft);white-space:nowrap">+ Adicionar</button>'
+    + '</div>'
+    + '<div style="font-size:11px;color:var(--text-muted);margin-top:9px;line-height:1.5">Mudou um secret? O dev server lê o <code>.env</code> no boot — <b>reinicie o dev server</b> pra valer.</div>';
+  host.innerHTML = '<div style="padding:18px 22px">' + seg + rows + add + '</div>';
+  // preenche os valores via JS (evita problema de escape em atributo)
+  if (r && r.secrets) r.secrets.forEach(function (s) {
+    const row = host.querySelector('.secret-row[data-key="' + s.key + '"]');
+    if (row) row.querySelector(".secret-val").value = s.value;
+  });
+  Array.prototype.forEach.call(host.querySelectorAll(".banco-seg-btn"), function (b) {
+    b.onclick = function () { if (Secrets.env !== b.dataset.env) { Secrets.env = b.dataset.env; secretsRender(host); } };
+  });
+  Array.prototype.forEach.call(host.querySelectorAll(".secret-row"), function (row) {
+    const key = row.dataset.key;
+    const input = row.querySelector(".secret-val");
+    row.querySelector(".secret-eye").onclick = function () {
+      const reveal = input.type === "password";
+      input.type = reveal ? "text" : "password";
+      this.innerHTML = _secretIcon(reveal ? "eye-off" : "eye");
+    };
+    row.querySelector(".secret-copy").onclick = function () {
+      navigator.clipboard.writeText(input.value).then(function () { showToast("Copiado.", "success"); }).catch(function () { showToast("Não consegui copiar.", "error"); });
+    };
+    row.querySelector(".secret-edit").onclick = async function () {
+      if (input.readOnly) { input.readOnly = false; input.type = "text"; input.focus(); this.innerHTML = _secretIcon("check"); this.title = "salvar"; return; }
+      const rr = await _secretsPost("set", { key: key, value: input.value }).catch(function (e) { return { error: e.message }; });
+      if (!rr || rr.error || rr.ok === false) showToast("Falhou: " + ((rr && rr.error) || "erro"), "error");
+      else { showToast("Salvo.", "success"); secretsRender(host); }
+    };
+    row.querySelector(".secret-del").onclick = async function () {
+      if (!window.confirm("Apagar a secret " + key + "?")) return;
+      const rr = await _secretsPost("delete", { key: key }).catch(function (e) { return { error: e.message }; });
+      if (!rr || rr.error || rr.ok === false) showToast("Falhou: " + ((rr && rr.error) || "erro"), "error");
+      else { showToast("Apagada.", "success"); secretsRender(host); }
+    };
+  });
+  const addBtn = host.querySelector("#secretAdd");
+  if (addBtn) addBtn.onclick = async function () {
+    const key = (host.querySelector("#secretNewKey").value || "").trim();
+    const val = host.querySelector("#secretNewVal").value;
+    if (!key) { showToast("Dê um nome pra secret.", "warn"); return; }
+    const rr = await _secretsPost("set", { key: key, value: val }).catch(function (e) { return { error: e.message }; });
+    if (!rr || rr.error || rr.ok === false) showToast("Falhou: " + ((rr && rr.error) || "erro"), "error");
+    else { showToast("Adicionada.", "success"); secretsRender(host); }
+  };
 }
 
 async function refreshDevServerState() {
@@ -8075,6 +8221,13 @@ function setCodeProject(path, name) {
   // Refresh project quick-bar (project name + branch)
   if (typeof updateProjectBar === "function") updateProjectBar();
   if (typeof loadGitStatus === "function") loadGitStatus();
+  // Re-aplica a view central inteira pro NOVO projeto: refaz o swap (senão renderTabs/
+  // loadFileTree dessincronizam o painel) + re-inicializa o conteúdo. Editor é o default;
+  // Preview é tratado pelo refreshDevServerState acima (evita init duplo).
+  if (typeof _codeCenterCurrentView === "string" && _codeCenterCurrentView !== "editor"
+      && _codeCenterCurrentView !== "preview" && typeof setCodeCenterView === "function") {
+    setCodeCenterView(_codeCenterCurrentView);
+  }
 }
 
 let _newProjectSource = "scaffold";
@@ -8093,9 +8246,22 @@ async function populateNewProjectDs() {
     }
   } catch {}
 }
+let _newProjectModal = null;
 function openNewProjectModal() {
-  const overlay = document.getElementById("newProjectOverlay");
-  if (!overlay) return;
+  const tpl = document.getElementById("newProjectFormTpl");
+  if (!tpl) return;
+  const body = document.createElement("div");
+  body.innerHTML = tpl.innerHTML;
+  _newProjectModal = jModal({
+    title: '<span style="display:inline-flex;align-items:center;gap:7px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10v6"/><path d="M9 13h6"/><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>Novo projeto</span>',
+    width: 560,
+    body,
+    actions: [
+      { label: "Cancelar", kind: "ghost", onClick: (m) => m.close() },
+      { label: "Criar", kind: "primary", id: "newProjectConfirmBtn", onClick: () => confirmNewProject() },
+    ],
+  });
+  // jModal insere o body de forma síncrona — os campos já estão no DOM aqui.
   document.getElementById("newProjectName").value = "";
   document.getElementById("newProjectDesc").value = "";
   document.getElementById("newProjectKind").value = "web";
@@ -8109,8 +8275,7 @@ function openNewProjectModal() {
   document.getElementById("newProjectStatus").textContent = "";
   setNewProjectSource("scaffold");
   onNewProjectKindChange();
-  overlay.style.display = "flex";
-  setTimeout(() => document.getElementById("newProjectName").focus(), 50);
+  setTimeout(() => { const n = document.getElementById("newProjectName"); if (n) n.focus(); }, 50);
 }
 
 // ── Folder picker (used by "Pasta local") ──
@@ -8178,14 +8343,9 @@ function confirmFolderPicker() {
 
 function setNewProjectSource(src) {
   _newProjectSource = src;
-  // Tab styling
-  const tabs = document.querySelectorAll("#newProjectSourceTabs button[data-src]");
-  tabs.forEach(b => {
-    if (b.dataset.src === src) {
-      b.style.background = "var(--accent)"; b.style.color = "white";
-    } else {
-      b.style.background = "transparent"; b.style.color = "var(--text-muted)";
-    }
+  // Tab styling — toggle .is-on (padrão .banco-seg)
+  document.querySelectorAll("#newProjectSourceTabs button[data-src]").forEach(b => {
+    b.classList.toggle("is-on", b.dataset.src === src);
   });
   // Conditional rows
   const localRow = document.getElementById("newProjectLocalRow");
@@ -8202,8 +8362,7 @@ function onNewProjectKindChange() {
 }
 
 function closeNewProjectModal() {
-  const overlay = document.getElementById("newProjectOverlay");
-  if (overlay) overlay.style.display = "none";
+  if (_newProjectModal) { _newProjectModal.close(); _newProjectModal = null; }
 }
 
 async function editCodeProject(path, name, ev) {
@@ -9033,6 +9192,7 @@ function _evacuateCenterPanels(area) {
     ["codeCanvasPanel", _codeCanvasOriginalParent],
     ["codeGitPanel", _codeGitOriginalParent],
     ["codeBancoPanel", _codeBancoOriginalParent],
+    ["codeSecretsPanel", _codeSecretsOriginalParent],
   ];
   for (const [id, parent] of map) {
     const el = document.getElementById(id);
@@ -9044,12 +9204,14 @@ function _evacuateCenterPanels(area) {
 
 let _codeGitOriginalParent = null;
 let _codeBancoOriginalParent = null;
+let _codeSecretsOriginalParent = null;
 let _pendingEditorRender = false; // editor precisa re-renderizar ao voltar do preview (edição em background)
 function setCodeCenterView(view) {
   const prev = document.getElementById("codePreviewPanel");
   const canvas = document.getElementById("codeCanvasPanel");
   const gitPanel = document.getElementById("codeGitPanel");
   const bancoPanel = document.getElementById("codeBancoPanel");
+  const secretsPanel = document.getElementById("codeSecretsPanel");
   const editorArea = document.getElementById("codeEditorArea");
   const rightPanel = document.getElementById("codeRightPanel");
   const btnEditor = document.getElementById("centerViewEditorBtn");
@@ -9057,17 +9219,20 @@ function setCodeCenterView(view) {
   const btnCanvas = document.getElementById("centerViewCanvasBtn");
   const btnGit = document.getElementById("centerViewGitBtn");
   const btnBanco = document.getElementById("centerViewBancoBtn");
+  const btnSecrets = document.getElementById("centerViewSecretsBtn");
   if (!editorArea) return;
   if (!_codePreviewOriginalParent && prev) _codePreviewOriginalParent = prev.parentElement || rightPanel;
   if (!_codeCanvasOriginalParent && canvas) _codeCanvasOriginalParent = canvas.parentElement || rightPanel;
   if (!_codeGitOriginalParent && gitPanel) _codeGitOriginalParent = gitPanel.parentElement || rightPanel;
   if (!_codeBancoOriginalParent && bancoPanel) _codeBancoOriginalParent = bancoPanel.parentElement || rightPanel;
+  if (!_codeSecretsOriginalParent && secretsPanel) _codeSecretsOriginalParent = secretsPanel.parentElement || rightPanel;
 
   // Always restore the inactive panels first
   if (view !== "preview") _restoreCodeCenterPanel(prev, _codePreviewOriginalParent);
   if (view !== "canvas") _restoreCodeCenterPanel(canvas, _codeCanvasOriginalParent);
   if (view !== "git") _restoreCodeCenterPanel(gitPanel, _codeGitOriginalParent);
   if (view !== "banco") _restoreCodeCenterPanel(bancoPanel, _codeBancoOriginalParent);
+  if (view !== "secrets") _restoreCodeCenterPanel(secretsPanel, _codeSecretsOriginalParent);
 
   const setBtn = (btn, active) => {
     if (!btn) return;
@@ -9076,25 +9241,30 @@ function setCodeCenterView(view) {
 
   if (view === "preview" && prev) {
     _swapCodeCenterPanel(prev, editorArea);
-    setBtn(btnEditor, false); setBtn(btnPreview, true); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, false);
+    setBtn(btnEditor, false); setBtn(btnPreview, true); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, false); setBtn(btnSecrets, false);
     if (btnPreview) { btnPreview.classList.remove("center-preview-live"); btnPreview.title = "Preview"; }
     _codeCenterCurrentView = "preview";
     initPreviewPane();
   } else if (view === "canvas" && canvas) {
     _swapCodeCenterPanel(canvas, editorArea);
-    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, true); setBtn(btnGit, false); setBtn(btnBanco, false);
+    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, true); setBtn(btnGit, false); setBtn(btnBanco, false); setBtn(btnSecrets, false);
     _codeCenterCurrentView = "canvas";
     initCanvasPane();
   } else if (view === "git" && gitPanel) {
     _swapCodeCenterPanel(gitPanel, editorArea);
-    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, true); setBtn(btnBanco, false);
+    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, true); setBtn(btnBanco, false); setBtn(btnSecrets, false);
     _codeCenterCurrentView = "git";
     initGitPane();
   } else if (view === "banco" && bancoPanel) {
     _swapCodeCenterPanel(bancoPanel, editorArea);
-    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, true);
+    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, true); setBtn(btnSecrets, false);
     _codeCenterCurrentView = "banco";
     initBancoPane();
+  } else if (view === "secrets" && secretsPanel) {
+    _swapCodeCenterPanel(secretsPanel, editorArea);
+    setBtn(btnEditor, false); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, false); setBtn(btnSecrets, true);
+    _codeCenterCurrentView = "secrets";
+    initSecretsPane();
   } else {
     // editor (default)
     Array.from(editorArea.children).forEach(ch => {
@@ -9104,7 +9274,7 @@ function setCodeCenterView(view) {
         delete ch.dataset._codeHidden;
       }
     });
-    setBtn(btnEditor, true); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, false);
+    setBtn(btnEditor, true); setBtn(btnPreview, false); setBtn(btnCanvas, false); setBtn(btnGit, false); setBtn(btnBanco, false); setBtn(btnSecrets, false);
     _codeCenterCurrentView = "editor";
     if (_pendingEditorRender) { _pendingEditorRender = false; renderEditor(); } // mostra edições feitas enquanto estava no preview
     if (typeof renderDevServerUI === "function") renderDevServerUI();
@@ -9543,12 +9713,10 @@ function updatePreviewBarUI() {
   const input = document.getElementById("previewEntry");
   const back  = document.getElementById("previewBackBtn");
   const fwd   = document.getElementById("previewFwdBtn");
-  const read  = document.getElementById("previewReadUrlBtn");
   if (!input) return;
   if (isDevModeRunning()) {
     if (back) back.style.display = "";
     if (fwd)  fwd.style.display  = "";
-    if (read) read.style.display = "";
     input.placeholder = "http://localhost:" + (devServerState.port || "5173") + "/";
     // Don't overwrite while user is typing
     if (document.activeElement !== input) {
@@ -9557,7 +9725,6 @@ function updatePreviewBarUI() {
   } else {
     if (back) back.style.display = "none";
     if (fwd)  fwd.style.display  = "none";
-    if (read) read.style.display = "none";
     input.placeholder = "index.html";
     if (document.activeElement !== input) {
       const st = getPreviewState();
@@ -9653,30 +9820,6 @@ function previewNavForward() {
   if (inputEl) inputEl.value = url;
   try {
     const u = new URL(url);
-    const baseU = new URL(devServerState.url);
-    if (u.origin === baseU.origin) setProjectPreviewPath(u.pathname + u.search + u.hash);
-  } catch {}
-  updatePreviewBarUI();
-}
-
-function previewReadIframeUrl() {
-  // Cross-origin will throw — silent fallback (only works when iframe shares origin).
-  const iframe = document.getElementById("previewFrame");
-  if (!iframe) return;
-  let href = null;
-  try { href = iframe.contentWindow && iframe.contentWindow.location && iframe.contentWindow.location.href; } catch {}
-  if (!href || href === "about:blank") {
-    // Silent — limitação cross-origin esperada com Vite/Next em outra porta
-    return;
-  }
-  // Strip our cache-bust param if we appended one previously
-  const cleaned = href.replace(/([?&])_=\d+(&|$)/, (m, a, b) => b === "&" ? a : "");
-  const finalUrl = cleaned.replace(/[?&]$/, "");
-  _previewPushNav(finalUrl);
-  const inputEl = document.getElementById("previewEntry");
-  if (inputEl) inputEl.value = finalUrl;
-  try {
-    const u = new URL(finalUrl);
     const baseU = new URL(devServerState.url);
     if (u.origin === baseU.origin) setProjectPreviewPath(u.pathname + u.search + u.hash);
   } catch {}
@@ -10669,7 +10812,9 @@ function updateProjectBar() {
   const bancoTab = document.getElementById("centerViewBancoBtn");
   const bancoOn = !!(PROJECT_ROOT && PROJECT_ROOT !== "/home/diogo/dev/nook");
   if (bancoTab) bancoTab.style.display = bancoOn ? "" : "none";
-  if (!bancoOn && typeof _codeCenterCurrentView !== "undefined" && _codeCenterCurrentView === "banco") setCodeCenterView("editor");
+  const secretsTab = document.getElementById("centerViewSecretsBtn");
+  if (secretsTab) secretsTab.style.display = bancoOn ? "" : "none";
+  if (!bancoOn && typeof _codeCenterCurrentView !== "undefined" && (_codeCenterCurrentView === "banco" || _codeCenterCurrentView === "secrets")) setCodeCenterView("editor");
   // Preview do Hub = ele mesmo vivo em :3000 (dogfooding, com picker). Canvas
   // (grid de componentes) pressupoe app Vite, entao fica escondido pro Hub.
   const isNook = PROJECT_ROOT === "/home/diogo/dev/nook";
@@ -10693,6 +10838,19 @@ function _gitFmtRelDate(iso) {
   return d.toLocaleDateString("pt-BR") + " " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }
 
+function _gitIcon(key) {
+  const P = {
+    branch: '<line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/>',
+    fetch: '<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>',
+    pull: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+    push: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
+    commit: '<circle cx="12" cy="12" r="3"/><line x1="3" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="21" y2="12"/>',
+    diff: '<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><path d="M11 18H8a2 2 0 0 1-2-2V9"/>',
+    restore: '<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>',
+    undo: '<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>',
+  };
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (P[key] || "") + '</svg>';
+}
 async function initGitPane() {
   const header = document.getElementById("gitPaneHeader");
   const log = document.getElementById("gitPaneLog");
@@ -10724,13 +10882,13 @@ async function initGitPane() {
   } catch {}
   // Render header
   header.innerHTML =
-      '<span style="color:var(--accent);font-weight:600">⎇ ' + escapeHtml(statusData.branch || "?") + '</span>'
-    + (ab.ahead || ab.behind ? '<span style="color:var(--text-muted)">' + (ab.ahead ? '↑' + ab.ahead + ' ' : '') + (ab.behind ? '↓' + ab.behind : '') + '</span>' : '<span style="color:#22c55e">sincronizado</span>')
+      '<span class="git-branch-chip">' + _gitIcon("branch") + escapeHtml(statusData.branch || "?") + '</span>'
+    + (ab.ahead || ab.behind ? '<span style="color:var(--text-muted)">' + (ab.ahead ? '↑' + ab.ahead + ' ' : '') + (ab.behind ? '↓' + ab.behind : '') + '</span>' : '<span style="color:#22c55e">● sincronizado</span>')
     + '<span id="gitPaneLastPush" style="color:var(--text-muted);font-size:11px"></span>'
     + '<span style="flex:1"></span>'
-    + '<button onclick="gitPaneAction(\'fetch\')" title="git fetch --all --prune" style="background:transparent;border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px">⟳ Fetch</button>'
-    + '<button onclick="gitQuickAction(\'pull\')" title="git pull --ff-only" style="background:transparent;border:1px solid var(--border);color:#06b6d4;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px">⬇ Pull</button>'
-    + '<button onclick="gitQuickAction(\'push\')" title="git push" style="background:transparent;border:1px solid var(--border);color:#3b82f6;padding:4px 10px;border-radius:5px;cursor:pointer;font-size:11px">⬆ Push</button>';
+    + '<button class="gitbtn" onclick="gitPaneAction(\'fetch\')" title="git fetch --all --prune">' + _gitIcon("fetch") + 'Fetch</button>'
+    + '<button class="gitbtn" onclick="gitQuickAction(\'pull\')" title="git pull --ff-only">' + _gitIcon("pull") + 'Pull</button>'
+    + '<button class="gitbtn is-primary" onclick="gitQuickAction(\'push\')" title="git push">' + _gitIcon("push") + 'Push</button>';
   // Working tree changes
   renderGitPaneChanges(statusData);
   // History
@@ -10739,23 +10897,32 @@ async function initGitPane() {
   loadGitPaneLastPush();
 }
 
+const _gitLastPushLocal = {};
 async function loadGitPaneLastPush() {
   const el = document.getElementById("gitPaneLastPush");
   if (!el) return;
+  const localTs = _gitLastPushLocal[PROJECT_ROOT] || 0;
   try {
     const r = await fetch("/api/git/last-push", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cwd: PROJECT_ROOT }),
     });
     const j = await r.json();
-    if (j.ok && j.pushedAt) {
-      const link = j.url ? '<a href="' + escAttr(j.url) + '" target="_blank" style="color:var(--accent);text-decoration:none">' + escapeHtml(j.repo) + '</a>' : escapeHtml(j.repo);
-      el.innerHTML = '· último push: ' + _gitFmtRelDate(j.pushedAt) + ' · ' + link;
-      el.title = new Date(j.pushedAt).toLocaleString("pt-BR");
+    let ts = 0, repo = "", url = "";
+    if (j.ok && j.pushedAt) { ts = +new Date(j.pushedAt); repo = j.repo || ""; url = j.url || ""; }
+    // GitHub demora a propagar o pushedAt — se publicamos agora pela UI, usa o nosso ts.
+    if (localTs > ts) ts = localTs;
+    if (ts) {
+      const link = url ? '<a href="' + escAttr(url) + '" target="_blank" style="color:var(--accent);text-decoration:none">' + escapeHtml(repo) + '</a>' : escapeHtml(repo);
+      el.innerHTML = '· último push: ' + _gitFmtRelDate(new Date(ts).toISOString()) + (repo ? ' · ' + link : '');
+      el.title = new Date(ts).toLocaleString("pt-BR");
     } else {
       el.textContent = "";
     }
-  } catch { el.textContent = ""; }
+  } catch {
+    if (localTs) { el.innerHTML = '· último push: ' + _gitFmtRelDate(new Date(localTs).toISOString()); el.title = new Date(localTs).toLocaleString("pt-BR"); }
+    else el.textContent = "";
+  }
 }
 
 function renderGitPaneChanges(statusData) {
@@ -10769,9 +10936,13 @@ function renderGitPaneChanges(statusData) {
     return;
   }
   changes.innerHTML = files.map(f => {
-    const color = f.status === "M" ? "#f59e0b" : (f.status === "A" || f.status === "?" || f.status === "??") ? "#10b981" : "#ef4444";
-    return '<div style="padding:3px 14px;display:flex;gap:8px;cursor:pointer;align-items:center" onclick="openFile(\'' + escAttr(f.path) + '\')" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'
-      + '<span style="color:' + color + ';font-weight:700;width:18px;font-family:ui-monospace,monospace;font-size:10px">' + (f.status || "?") + '</span>'
+    const st = (f.status || "?").trim();
+    const pal = st === "M" ? ["#f59e0b", "rgba(245,158,11,.15)"]
+      : (st === "A" || st === "?" || st === "??") ? ["#10b981", "rgba(16,185,129,.15)"]
+      : ["#ef4444", "rgba(239,68,68,.15)"];
+    const label = st === "??" ? "U" : st.charAt(0).toUpperCase();
+    return '<div style="padding:4px 14px;display:flex;gap:9px;cursor:pointer;align-items:center" onclick="openFile(\'' + escAttr(f.path) + '\')" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'
+      + '<span class="git-file-st" style="color:' + pal[0] + ';background:' + pal[1] + '" title="' + escAttr(st) + '">' + label + '</span>'
       + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">' + escapeHtml(f.name).replace(/<br>/g,"") + '</span></div>';
   }).join("");
 }
@@ -10791,9 +10962,9 @@ async function loadGitPaneLog() {
       const refs = c.refs ? c.refs.split(",").map(s => s.trim()).filter(Boolean) : [];
       const refsHtml = refs.map(r => {
         const isHead = r.startsWith("HEAD");
-        return '<span style="background:' + (isHead ? 'var(--accent)' : 'var(--surface2)') + ';color:' + (isHead ? 'white' : 'var(--text-muted)') + ';padding:1px 6px;border-radius:3px;font-size:9px;font-family:ui-monospace,monospace">' + escapeHtml(r) + '</span>';
+        return '<span style="background:' + (isHead ? 'var(--accent-soft)' : 'var(--surface2)') + ';color:' + (isHead ? 'var(--accent)' : 'var(--text-muted)') + ';border:1px solid ' + (isHead ? 'var(--accent-soft)' : 'var(--border)') + ';padding:1px 6px;border-radius:var(--radius-sm);font-size:9px;font-weight:600;font-family:var(--font-mono)">' + escapeHtml(r) + '</span>';
       }).join(" ");
-      return '<div onclick="gitPaneShowCommit(\'' + escAttr(c.hash) + '\', this)" style="padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'
+      return '<div onclick="gitPaneShowCommit(\'' + escAttr(c.hash) + '\', \'' + escAttr(c.shortHash) + '\', this)" style="padding:8px 14px;border-bottom:1px solid var(--border);cursor:pointer" onmouseover="this.style.background=\'var(--surface)\'" onmouseout="this.style.background=\'\'">'
         + '<div style="display:flex;gap:8px;align-items:center;font-size:12px">'
         +   '<span style="font-family:ui-monospace,monospace;color:var(--accent)">' + escapeHtml(c.shortHash) + '</span>'
         +   '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">' + escapeHtml(c.subject) + '</span>'
@@ -10803,13 +10974,13 @@ async function loadGitPaneLog() {
         +   '<span>' + escapeHtml(c.author) + '</span>'
         +   '<span>' + _gitFmtRelDate(c.date) + '</span>'
         + '</div>'
-        + '<div class="gitPaneCommitDetail" style="display:none;margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;font-size:10px;font-family:ui-monospace,monospace;white-space:pre-wrap;max-height:300px;overflow:auto;color:var(--text-muted)"></div>'
+        + '<div class="gitPaneCommitDetail" onclick="event.stopPropagation()" style="display:none;margin-top:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px;font-size:10px;max-height:340px;overflow:auto;color:var(--text-muted)"></div>'
         + '</div>';
     }).join("");
   } catch (e) { log.innerHTML = '<div style="padding:14px;color:#ef4444">' + escapeHtml(e.message) + '</div>'; }
 }
 
-async function gitPaneShowCommit(hash, rowEl) {
+async function gitPaneShowCommit(hash, shortHash, rowEl) {
   const detail = rowEl.querySelector(".gitPaneCommitDetail");
   if (!detail) return;
   if (detail.style.display !== "none" && detail.dataset.loaded) {
@@ -10818,16 +10989,104 @@ async function gitPaneShowCommit(hash, rowEl) {
   }
   detail.style.display = "block";
   if (detail.dataset.loaded) return;
-  detail.textContent = "Carregando...";
+  detail.innerHTML = '<span style="color:var(--text-muted)">Carregando...</span>';
+  const sh = shortHash || hash.slice(0, 7);
   try {
-    const r = await fetch("/api/git/show", {
+    const r = await fetch("/api/git/commit-summary", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ cwd: PROJECT_ROOT, hash }),
     });
     const j = await r.json();
-    detail.textContent = j.ok ? (j.output || "(vazio)") : (j.error || "Falha");
+    if (!j.ok) { detail.innerHTML = '<span style="color:#ef4444">' + escapeHtml(j.error || "Falha") + '</span>'; detail.dataset.loaded = "1"; return; }
+    const verb = { A: ["Novo", "#10b981"], M: ["Alterado", "#f59e0b"], D: ["Apagado", "#ef4444"], R: ["Renomeado", "#3b82f6"], C: ["Copiado", "#3b82f6"], T: ["Tipo", "#a78bfa"] };
+    const filesHtml = (j.files || []).map(f => {
+      const v = verb[f.status] || ["Mudou", "var(--text-muted)"];
+      return '<div style="display:flex;align-items:center;gap:9px;padding:2px 0;font-size:11px">'
+        + '<span style="flex:0 0 74px;color:' + v[1] + ';font-weight:600">' + v[0] + '</span>'
+        + '<code style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">' + escapeHtml(f.path) + '</code></div>';
+    }).join("") || '<div style="color:var(--text-muted);font-size:11px">(sem arquivos)</div>';
+    detail.innerHTML =
+        '<div style="display:flex;justify-content:space-between;gap:8px;margin-bottom:8px">'
+      +   '<button class="gitbtn is-primary" onclick="event.stopPropagation();gitExplainCommit(this,\'' + escAttr(hash) + '\')" title="Explicar em português com IA">✨ Explicar</button>'
+      +   '<button class="gitbtn" onclick="event.stopPropagation();gitRestoreVersion(\'' + escAttr(hash) + '\',\'' + escAttr(sh) + '\')" title="Volta o projeto pra esta versão — cria um novo ponto, não apaga nada">' + _gitIcon("restore") + 'Restaurar esta versão</button>'
+      + '</div>'
+      + '<div class="gitAiExplain" style="display:none;font-size:12px;color:var(--text);background:var(--accent-soft);border:1px solid var(--accent-soft);border-radius:6px;padding:9px 11px;line-height:1.5;margin-bottom:10px;white-space:pre-wrap"></div>'
+      + '<div style="font-size:12px;color:var(--text);white-space:pre-wrap;line-height:1.5;margin-bottom:12px">' + escapeHtml(j.message || "(sem descrição)") + '</div>'
+      + '<div style="font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">O que mudou · <span style="color:#10b981">+' + (j.insertions || 0) + '</span> <span style="color:#ef4444">−' + (j.deletions || 0) + '</span></div>'
+      + filesHtml
+      + '<div style="margin-top:11px"><button class="gitbtn" onclick="event.stopPropagation();gitToggleCode(this)" data-hash="' + escAttr(hash) + '">' + _gitIcon("diff") + 'Ver código</button>'
+      + '<pre class="gitCommitCode" style="display:none;margin:8px 0 0;white-space:pre-wrap;font-family:ui-monospace,monospace;font-size:10px;color:var(--text-muted)"></pre></div>';
     detail.dataset.loaded = "1";
-  } catch (e) { detail.textContent = e.message; }
+  } catch (e) { detail.innerHTML = escapeHtml(e.message); }
+}
+
+async function gitExplainCommit(btn, hash) {
+  const detail = btn.closest(".gitPaneCommitDetail");
+  const box = detail && detail.querySelector(".gitAiExplain");
+  if (!box) return;
+  box.style.display = "block";
+  box.innerHTML = '<span style="color:var(--text-muted)">✨ Gerando explicação… (pode levar alguns segundos)</span>';
+  btn.disabled = true;
+  try {
+    const r = await fetch("/api/git/ai-explain", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cwd: PROJECT_ROOT, hash }),
+    });
+    const j = await r.json();
+    box.textContent = j.ok ? (j.text || "(sem resposta)") : ("Falhou: " + (j.error || "erro"));
+  } catch (e) { box.textContent = "Erro: " + e.message; }
+  finally { btn.disabled = false; }
+}
+
+async function gitToggleCode(btn) {
+  const pre = btn.parentElement.querySelector(".gitCommitCode");
+  if (!pre) return;
+  if (pre.style.display !== "none") { pre.style.display = "none"; return; }
+  pre.style.display = "block";
+  if (pre.dataset.loaded) return;
+  pre.textContent = "Carregando...";
+  try {
+    const r = await fetch("/api/git/show", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cwd: PROJECT_ROOT, hash: btn.dataset.hash }),
+    });
+    const j = await r.json();
+    pre.textContent = j.ok ? (j.output || "(sem alterações)") : (j.error || "Falha");
+    pre.dataset.loaded = "1";
+  } catch (e) { pre.textContent = e.message; }
+}
+
+async function gitRestoreVersion(hash, shortHash) {
+  if (!confirm("Restaurar o projeto pra a versão " + shortHash + "?\n\nVolta os arquivos pra como estavam nesse commit, criando um novo ponto. Nada é apagado — os commits posteriores continuam no histórico.")) return;
+  showToast("⏳ Restaurando...");
+  try {
+    const r = await fetch("/api/git/restore-version", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cwd: PROJECT_ROOT, hash }),
+    });
+    const j = await r.json();
+    if (j.ok) {
+      showToast(j.message || ("✅ Restaurado pra versão " + (j.short || shortHash)), "success");
+      if (typeof loadFileTree === "function") loadFileTree();
+      if (typeof _codeCenterCurrentView !== "undefined" && _codeCenterCurrentView === "git") initGitPane();
+    } else gitShowErrorModal("Restaurar versão", j.error || "?");
+  } catch (e) { gitShowErrorModal("Restaurar versão", e.message); }
+}
+
+async function gitUndoLastCommit() {
+  if (!confirm("Desfazer o último commit?\n\nO commit é removido, mas TUAS MUDANÇAS continuam (pra corrigir e commitar de novo).")) return;
+  showToast("⏳ Desfazendo...");
+  try {
+    const r = await fetch("/api/git/undo-last-commit", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cwd: PROJECT_ROOT }),
+    });
+    const j = await r.json();
+    if (j.ok) {
+      showToast("✅ Último commit desfeito (mudanças mantidas)", "success");
+      if (typeof _codeCenterCurrentView !== "undefined" && _codeCenterCurrentView === "git") initGitPane();
+    } else gitShowErrorModal("Desfazer commit", j.error || "?");
+  } catch (e) { gitShowErrorModal("Desfazer commit", e.message); }
 }
 
 async function gitPaneAction(action) {
@@ -10846,10 +11105,11 @@ async function gitPaneAction(action) {
 }
 
 async function loadGitStatus() {
+  const el = document.getElementById("gitStatus");
+  if (!el) return;
   try {
     const res = await fetch("/api/git-status?path=" + encodeURIComponent(PROJECT_ROOT));
     const data = await res.json();
-    const el = document.getElementById("gitStatus");
     let filesHtml = '';
     if (data.files && data.files.length) {
       filesHtml = data.files.map(f => {
@@ -10885,9 +11145,10 @@ async function gitCommitDialog() {
     '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;width:560px;max-width:90vw;display:flex;flex-direction:column;gap:10px">'
     +   '<div style="display:flex;justify-content:space-between;align-items:center">'
     +     '<div style="font-size:14px;font-weight:600">💾 Commit em ' + escapeHtml(PROJECT_ROOT.split("/").pop()) + '</div>'
-    +     '<button id="gitCommitSuggest" title="Gerar mensagem a partir do diff staged" style="background:transparent;border:1px solid var(--border);color:var(--accent);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">✨ Sugerir msg</button>'
+    +     '<button id="gitCommitSuggest" title="Gerar título e descrição com IA a partir das mudanças" style="background:var(--accent-soft);border:1px solid var(--accent-soft);color:var(--accent);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px">✨ Gerar com IA</button>'
     +   '</div>'
-    +   '<textarea id="gitCommitMsg" rows="3" placeholder="Mensagem (assunto na 1ª linha; corpo opcional)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;outline:none;resize:vertical;font-family:inherit;line-height:1.5"></textarea>'
+    +   '<input id="gitCommitTitle" placeholder="Título (resumo curto da mudança)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:13px;outline:none;font-family:inherit">'
+    +   '<textarea id="gitCommitDesc" rows="4" placeholder="Descrição (opcional — o que mudou e por quê)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:8px 10px;border-radius:6px;font-size:12px;outline:none;resize:vertical;font-family:inherit;line-height:1.5"></textarea>'
     +   '<label style="font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:6px"><input type="checkbox" id="gitCommitStage" checked> git add -A antes (stage tudo)</label>'
     +   '<div style="display:flex;gap:8px;justify-content:flex-end">'
     +     '<button id="gitCommitCancel" style="background:transparent;border:1px solid var(--border);color:var(--text-muted);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px">Cancelar</button>'
@@ -10896,49 +11157,35 @@ async function gitCommitDialog() {
     +   '<div id="gitCommitOut" style="font-size:11px;color:var(--text-muted);max-height:120px;overflow-y:auto;font-family:ui-monospace,monospace;display:none;white-space:pre-wrap;background:var(--bg);padding:8px;border-radius:4px"></div>'
     + '</div>';
   document.body.appendChild(overlay);
-  const msgEl = overlay.querySelector("#gitCommitMsg"); msgEl.focus();
+  const titleEl = overlay.querySelector("#gitCommitTitle");
+  const descEl = overlay.querySelector("#gitCommitDesc");
+  titleEl.focus();
   overlay.querySelector("#gitCommitCancel").onclick = () => overlay.remove();
   overlay.querySelector("#gitCommitSuggest").onclick = async () => {
     const sug = overlay.querySelector("#gitCommitSuggest");
-    sug.disabled = true; sug.textContent = "✨ ...";
+    sug.disabled = true; sug.textContent = "✨ Gerando…";
     try {
       const stageAll = overlay.querySelector("#gitCommitStage").checked;
-      // Get diff: if stage all, use combined unstaged+staged; else just staged
-      const r1 = await fetch("/api/git/diff", {
+      const r = await fetch("/api/git/ai-commit-msg", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cwd: PROJECT_ROOT, staged: !stageAll }),
       });
-      const j1 = await r1.json();
-      const diff = (j1.output || "").slice(0, 30000);
-      if (!diff.trim()) { alert("Sem diff pra resumir"); return; }
-      const prompt = "Gere UMA mensagem de commit em conventional commits (feat/fix/refactor/docs/test/chore: descrição) baseada no diff abaixo. APENAS a mensagem, em pt-BR, máx 70 chars no assunto. Se mudanças variadas, escolha o tema dominante.\n\nDIFF:\n" + diff;
-      const r2 = await fetch("/api/core/chat", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, mode: "chat" }),
-      });
-      const reader = r2.body.getReader();
-      const decoder = new TextDecoder();
-      let buf = "", out = "";
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split("\n"); buf = lines.pop();
-        for (const ln of lines) {
-          if (!ln.startsWith("data: ")) continue;
-          try { const e = JSON.parse(ln.slice(6).trim()); if (e.kind === "token" && e.text) out += e.text; } catch {}
-        }
-      }
-      msgEl.value = out.trim().replace(/^["`]|["`]$/g, "");
+      const j = await r.json();
+      if (!j.ok) { showToast("Falhou: " + (j.error || "erro"), "error"); return; }
+      const lines = (j.message || "").replace(/^["'`]+|["'`]+$/g, "").split("\n");
+      titleEl.value = (lines.shift() || "").trim();
+      descEl.value = lines.join("\n").trim();
     } catch (e) {
-      alert("Erro ao gerar: " + e.message);
+      showToast("Erro ao gerar: " + e.message, "error");
     } finally {
-      sug.disabled = false; sug.textContent = "✨ Sugerir msg";
+      sug.disabled = false; sug.textContent = "✨ Gerar com IA";
     }
   };
   overlay.querySelector("#gitCommitOk").onclick = async () => {
-    const msg = msgEl.value.trim();
-    if (!msg) { alert("Mensagem obrigatória"); return; }
+    const title = titleEl.value.trim();
+    const desc = descEl.value.trim();
+    if (!title) { showToast("Dê um título pro commit.", "warn"); titleEl.focus(); return; }
+    const msg = title + (desc ? "\n\n" + desc : "");
     const btn = overlay.querySelector("#gitCommitOk");
     btn.disabled = true; btn.textContent = "...";
     try {
@@ -10951,6 +11198,8 @@ async function gitCommitDialog() {
         overlay.remove();
         showToast("✅ Commit criado");
         loadGitStatus();
+        // Recontabiliza Mudanças (→ limpo) e o sync ahead/behind (commitou → ficou à frente).
+        if (typeof _codeCenterCurrentView !== "undefined" && _codeCenterCurrentView === "git" && typeof initGitPane === "function") initGitPane();
       } else {
         const out = overlay.querySelector("#gitCommitOut");
         out.style.display = "block";
@@ -10976,6 +11225,7 @@ async function gitQuickAction(action) {
     const j = await r.json();
     if (j.ok) {
       showToast("✅ " + labels[action] + " ok");
+      if (action === "push") _gitLastPushLocal[PROJECT_ROOT] = Date.now();
       loadGitStatus();
       if (typeof _codeCenterCurrentView !== "undefined" && _codeCenterCurrentView === "git") initGitPane();
     } else {
@@ -12850,12 +13100,9 @@ function renderBmadModeToggle(mode) {
   const cur = getBmadMode(mode);
   const btn = (val, label, title) => {
     const active = cur === val;
-    const bg = active ? "var(--accent)" : "transparent";
-    const color = active ? "#fff" : "var(--text-muted)";
-    const border = active ? "var(--accent)" : "var(--border)";
-    return '<button class="bmad-mode-btn" data-mode-val="' + val + '" onclick="setBmadModeAndRefresh(\'' + mode + '\',\'' + val + '\')" title="' + title + '" style="background:' + bg + ';border:1px solid ' + border + ';color:' + color + ';padding:2px 8px;border-radius:4px;cursor:pointer;font-size:10px;font-weight:600">' + label + '</button>';
+    return '<button class="bmad-mode-btn' + (active ? " on" : "") + '" data-mode-val="' + val + '" onclick="setBmadModeAndRefresh(\'' + mode + '\',\'' + val + '\')" title="' + title + '">' + label + '</button>';
   };
-  return '<span class="bmad-mode-toggle" style="display:inline-flex;gap:2px;margin:0 6px">'
+  return '<span class="bmad-mode-toggle">'
     + btn("auto", "Auto", "Avanca direto pra proxima fase")
     + btn("manual", "Manual", "Pergunta antes de avancar (com opcao de editar o artefato)")
     + '</span>';
@@ -12865,10 +13112,7 @@ function setBmadModeAndRefresh(mode, value) {
   const bar = document.getElementById("bmadBar" + mode.charAt(0).toUpperCase() + mode.slice(1));
   if (!bar) return;
   bar.querySelectorAll(".bmad-mode-btn").forEach(b => {
-    const active = b.dataset.modeVal === value;
-    b.style.background = active ? "var(--accent)" : "transparent";
-    b.style.color = active ? "#fff" : "var(--text-muted)";
-    b.style.borderColor = active ? "var(--accent)" : "var(--border)";
+    b.classList.toggle("on", b.dataset.modeVal === value);
   });
   // Re-render notice if currently shown (so its buttons match new mode)
   if (document.getElementById("bmadAutoNotice-" + mode)) {

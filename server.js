@@ -3616,6 +3616,19 @@ function gitRun(args, cwd, cb, opts) {
   proc.on("error", e => cb({ ok: false, error: e.message }));
 }
 
+// One-shot do Claude via CLI (sem sidecar/key): só geração de TEXTO (resumos/descrições).
+// SEM bypass de permissão — em modo -p headless as ferramentas ficam negadas, então isto
+// não é um agente: só completa o prompt e sai. Não roda Bash/edita arquivos.
+function claudeOneShot(prompt, cb) {
+  const args = ["-p", String(prompt || ""), "--model", "haiku"];
+  const proc = spawn("claude", args, { env: { ...process.env }, stdio: ["ignore", "pipe", "pipe"], timeout: 90000 });
+  let out = "", err = "";
+  proc.stdout.on("data", c => (out += c.toString()));
+  proc.stderr.on("data", c => (err += c.toString()));
+  proc.on("close", code => cb(code === 0 ? { ok: true, text: out.trim() } : { ok: false, error: (err || out || ("exit " + code)).slice(-600) }));
+  proc.on("error", e => cb({ ok: false, error: e.message }));
+}
+
 function readJsonBody(req, cb) {
   let body = "";
   req.on("data", c => (body += c));
@@ -4621,7 +4634,100 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
     });
   }
   if (req.url === "/api/git/show" && req.method === "POST") {
-    return gitJsonEndpoint(req, res, (d) => d.hash && /^[0-9a-fA-F]{4,64}$/.test(d.hash) ? ["show", "--stat", "--patch", d.hash] : null);
+    return gitJsonEndpoint(req, res, (d) => d.hash && /^[0-9a-fA-F]{4,64}$/.test(d.hash) ? ["show", "--stat", "--patch", "-m", "--first-parent", d.hash] : null);
+  }
+  // Resumo legível de um commit: mensagem + lista de arquivos (status) + totais +/-,
+  // pra mostrar "o que mudou" em vez do diff cru.
+  if (req.url === "/api/git/commit-summary" && req.method === "POST") {
+    return readJsonBody(req, (err, data) => {
+      const J = (o) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
+      if (err) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ ok: false, error: "JSON invalido" })); }
+      const hash = String(data.hash || "");
+      if (!/^[0-9a-fA-F]{4,64}$/.test(hash)) return J({ ok: false, error: "hash invalido" });
+      gitRun(["show", "--no-patch", "--format=%an%x1f%aI%x1f%B", hash], data.cwd, (m) => {
+        if (!m.ok) return J({ ok: false, error: m.error || m.output || "falhou" });
+        const parts = (m.output || "").split("\x1f");
+        const author = parts[0] || "", date = parts[1] || "", message = (parts.slice(2).join("\x1f") || "").trim();
+        gitRun(["show", "--name-status", "--format=", "-m", "--first-parent", hash], data.cwd, (ns) => {
+          const files = [];
+          (ns.output || "").split("\n").forEach((line) => {
+            const mt = line.match(/^([A-Z])\d*\t(.+)$/);
+            if (mt) { let p = mt[2]; if (p.indexOf("\t") >= 0) p = p.split("\t").pop(); files.push({ status: mt[1], path: p }); }
+          });
+          gitRun(["show", "--shortstat", "--format=", "-m", "--first-parent", hash], data.cwd, (ss) => {
+            const sline = (ss.output || "").split("\n").map((s) => s.trim()).filter(Boolean).pop() || "";
+            const ins = (sline.match(/(\d+) insertion/) || [])[1] || "0";
+            const del = (sline.match(/(\d+) deletion/) || [])[1] || "0";
+            J({ ok: true, author, date, message, files, insertions: +ins, deletions: +del });
+          });
+        });
+      });
+    });
+  }
+  // IA: explica um commit em português simples (sem código).
+  if (req.url === "/api/git/ai-explain" && req.method === "POST") {
+    return readJsonBody(req, (err, data) => {
+      const J = (o) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
+      if (err) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ ok: false, error: "JSON invalido" })); }
+      const hash = String(data.hash || "");
+      if (!/^[0-9a-fA-F]{4,64}$/.test(hash)) return J({ ok: false, error: "hash invalido" });
+      gitRun(["show", "--stat", "--patch", "-m", "--first-parent", hash], data.cwd, (r) => {
+        if (!r.ok) return J({ ok: false, error: r.error || "falhou" });
+        const diff = (r.output || "").slice(0, 14000);
+        const prompt = "Explique em português brasileiro, de forma simples e curta (3 a 6 frases, SEM jargão técnico e SEM mostrar código), o que este commit fez na prática. Responda só com a explicação.\n\n" + diff;
+        claudeOneShot(prompt, (a) => J(a.ok ? { ok: true, text: a.text } : { ok: false, error: a.error }));
+      });
+    });
+  }
+  // IA: gera mensagem de commit (título + descrição em bullets) a partir do diff.
+  if (req.url === "/api/git/ai-commit-msg" && req.method === "POST") {
+    return readJsonBody(req, (err, data) => {
+      const J = (o) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
+      if (err) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ ok: false, error: "JSON invalido" })); }
+      const args = data.staged ? ["diff", "--cached"] : ["diff", "HEAD"];
+      gitRun(args, data.cwd, (r) => {
+        if (!r.ok) return J({ ok: false, error: r.error || "git diff falhou" });
+        const diff = (r.output || "").slice(0, 16000);
+        if (!diff.trim()) return J({ ok: false, error: "Sem mudanças pra resumir" });
+        const prompt = "Gere uma mensagem de commit em português brasileiro a partir do diff abaixo. Formato EXATO: primeira linha = título curto (até 60 caracteres) resumindo a mudança; depois uma linha em branco; depois de 2 a 5 marcadores começando com '- ' descrevendo o que mudou, em linguagem simples. Responda SÓ com a mensagem (sem aspas, sem crases, sem explicações).\n\n" + diff;
+        claudeOneShot(prompt, (a) => J(a.ok ? { ok: true, message: a.text } : { ok: false, error: a.error }));
+      });
+    });
+  }
+  // Restaura o projeto pra um commit (NÃO-destrutivo): faz a árvore bater com o commit e
+  // commita por cima — os commits posteriores continuam no histórico (parent do novo commit).
+  if (req.url === "/api/git/restore-version" && req.method === "POST") {
+    return readJsonBody(req, (err, data) => {
+      const J = (o) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
+      if (err) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ ok: false, error: "JSON invalido" })); }
+      const hash = String(data.hash || "");
+      if (!/^[0-9a-fA-F]{4,64}$/.test(hash)) return J({ ok: false, error: "hash invalido" });
+      const short = hash.slice(0, 7);
+      gitRun(["status", "--porcelain"], data.cwd, (st) => {
+        if (!st.ok) return J({ ok: false, error: st.error || "git status falhou" });
+        if ((st.output || "").trim()) return J({ ok: false, error: "Há mudanças não commitadas. Faça commit ou descarte antes de restaurar." });
+        gitRun(["read-tree", "-u", "--reset", hash], data.cwd, (r1) => {
+          if (!r1.ok) return J({ ok: false, error: r1.error || r1.output || "read-tree falhou" });
+          gitRun(["commit", "-m", "Restaurar versão " + short], data.cwd, (r2) => {
+            if (r2.ok) return J({ ok: true, short });
+            const out = (r2.output || "") + (r2.error || "");
+            if (/nothing to commit|working tree clean/i.test(out)) return J({ ok: true, short, message: "O projeto já estava nessa versão." });
+            return J({ ok: false, error: r2.error || out || "commit falhou" });
+          });
+        });
+      });
+    });
+  }
+  // Desfaz o último commit MANTENDO as mudanças (reset --soft) — pra corrigir e commitar de novo.
+  if (req.url === "/api/git/undo-last-commit" && req.method === "POST") {
+    return readJsonBody(req, (err, data) => {
+      const J = (o) => { res.writeHead(200, { "Content-Type": "application/json" }); res.end(JSON.stringify(o)); };
+      if (err) { res.writeHead(400, { "Content-Type": "application/json" }); return res.end(JSON.stringify({ ok: false, error: "JSON invalido" })); }
+      gitRun(["reset", "--soft", "HEAD~1"], data.cwd, (r) => {
+        if (r.ok) return J({ ok: true });
+        return J({ ok: false, error: r.error || r.output || "Falhou (talvez só exista 1 commit)" });
+      });
+    });
   }
   if (req.url === "/api/git/last-push" && req.method === "POST") {
     return readJsonBody(req, (err, data) => {
@@ -4913,7 +5019,7 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
     }).catch((e) => { res.writeHead(500, { "Content-Type": "application/json" }); res.end(JSON.stringify({ error: e.message })); });
     return;
   }
-  if ((req.url === "/api/code/db/migrate" || req.url === "/api/code/db/generate" || req.url === "/api/code/db/promote" || req.url === "/api/code/db/diff" || req.url === "/api/code/db/publish" || req.url === "/api/code/db/inspect") && req.method === "POST") {
+  if ((req.url === "/api/code/db/migrate" || req.url === "/api/code/db/generate" || req.url === "/api/code/db/promote" || req.url === "/api/code/db/diff" || req.url === "/api/code/db/publish" || req.url === "/api/code/db/inspect" || req.url === "/api/code/db/connect") && req.method === "POST") {
     let body = ""; req.on("data", c => body += c);
     req.on("end", async () => {
       try {
@@ -4927,7 +5033,43 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
         else if (req.url.endsWith("/promote")) r = await codeDb.promote(safe);
         else if (req.url.endsWith("/publish")) r = await codeDb.publishToSchema(safe, d.schema, { dryRun: d.dryRun });
         else if (req.url.endsWith("/inspect")) r = await codeDb.dbInspect(safe, d.schema);
+        else if (req.url.endsWith("/connect")) r = await codeDb.connect(safe, d.token, d.ref);
         else r = await codeDb.migrate(safe);
+        res.writeHead(r.ok ? 200 : 500, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(r));
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: e.message }));
+      }
+    });
+    return;
+  }
+
+  if (req.url.split("?")[0] === "/api/code/secrets" && req.method === "GET") {
+    try {
+      const u = new URL(req.url, "http://localhost");
+      const safe = _safeProjectPath(u.searchParams.get("path"));
+      if (!safe) throw new Error("Caminho invalido");
+      const r = codeScaffold.readSecrets(safe, u.searchParams.get("env"));
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(r));
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  if ((req.url === "/api/code/secrets" || req.url === "/api/code/secrets/delete") && req.method === "POST") {
+    let body = ""; req.on("data", c => body += c);
+    req.on("end", () => {
+      try {
+        const d = JSON.parse(body || "{}");
+        const safe = _safeProjectPath(d.path);
+        if (!safe) throw new Error("Caminho invalido");
+        const r = req.url.endsWith("/delete")
+          ? codeScaffold.deleteSecret(safe, d.env, d.key)
+          : codeScaffold.setSecret(safe, d.env, d.key, d.value);
         res.writeHead(r.ok ? 200 : 500, { "Content-Type": "application/json" });
         res.end(JSON.stringify(r));
       } catch (e) {
