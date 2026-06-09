@@ -145,7 +145,7 @@
     .rail-divider { width: 24px; height: 1px; background: var(--border); margin: 4px 0; }
 
     /* ── Mode Containers ── */
-    .mode-container { display: none; height: 100vh; overflow: hidden; position: relative; }
+    .mode-container { display: none; height: calc(100vh - 22px); overflow: hidden; position: relative; }
     .mode-container.active { display: flex; }
     /* HUB: graph viewer needs explicit container height for vis-network */
     #mode-hub > div:not(.sidebar) {
@@ -1392,6 +1392,11 @@
             <option value="en-US">English (US)</option>
             <option value="es">Espanol</option>
           </select>
+        </div>
+        <div class="modal-field">
+          <div class="modal-field-label">Desktop</div>
+          <button id="installShortcutBtn" onclick="installDesktopShortcut()" style="width:100%;padding:9px 12px;border-radius:6px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent-strong);cursor:pointer;font-weight:500;font-size:13px">Instalar atalho no desktop</button>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px">Cria um ícone no menu de aplicativos que abre o Nook numa janela própria.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -4253,6 +4258,24 @@ function saveProfile() {
   saveState(); applyTheme(); renderSidebar(); closeProfileModal();
 }
 function applyTheme() { document.documentElement.setAttribute("data-theme", state.profile.theme); }
+async function installDesktopShortcut() {
+  const btn = document.getElementById("installShortcutBtn");
+  const orig = btn ? btn.textContent : "";
+  if (btn) { btn.disabled = true; btn.textContent = "Instalando..."; }
+  try {
+    const r = await fetch("/api/desktop/install", { method: "POST" }).then(x => x.json());
+    if (r.ok) {
+      showToast("Atalho criado — ícone na área de trabalho e no menu de apps (busque 'Nook')", "success");
+      if (btn) btn.textContent = "Atalho instalado ✓";
+    } else {
+      showToast("Falha: " + (r.error || "erro"), "error");
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+    }
+  } catch (e) {
+    showToast("Erro: " + e.message, "error");
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
 
 
 // ═══════════════════════════════════════════

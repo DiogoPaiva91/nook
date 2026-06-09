@@ -589,6 +589,94 @@ function checkClaudeStatus(res) {
   setTimeout(() => { try { proc.kill(); } catch {} }, 3000);
 }
 
+// ── Desktop shortcut (atalho de app no menu/desktop) ──
+// Escreve launcher + ícone + .desktop em ~/.local. Auto-configura node (o
+// próprio binário que roda o server), detecta o chrome e bakeia as portas atuais.
+function installDesktopShortcut() {
+  const HOME = process.env.HOME;
+  if (!HOME) throw new Error("HOME não definido");
+  const NOOK_DIR = __dirname;
+  const NODE = process.execPath;
+  const VENV_PY = path.join(NOOK_DIR, ".venv", "bin", "python");
+  const CHROME = ["/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser", "/snap/bin/chromium"].find((p) => fs.existsSync(p));
+  if (!CHROME) throw new Error("Chrome/Chromium não encontrado");
+
+  const binDir = path.join(HOME, ".local", "bin");
+  const iconDir = path.join(HOME, ".local", "share", "icons");
+  const appsDir = path.join(HOME, ".local", "share", "applications");
+  for (const d of [binDir, iconDir, appsDir]) fs.mkdirSync(d, { recursive: true });
+
+  const launcherPath = path.join(binDir, "nook-app");
+  const iconPath = path.join(iconDir, "nook-studio.svg");
+  const desktopPath = path.join(appsDir, "nook-studio.desktop");
+
+  const launcher = `#!/usr/bin/env bash
+# Gerado pelo Nook Studio. Sobe Hub+sidecar se preciso e abre janela de app.
+set -euo pipefail
+NOOK_DIR=${JSON.stringify(NOOK_DIR)}
+LOG_DIR="$HOME/.cache/nook"
+URL="http://localhost:${PORT}"
+NODE=${JSON.stringify(NODE)}
+CHROME=${JSON.stringify(CHROME)}
+VENV_PY=${JSON.stringify(VENV_PY)}
+mkdir -p "$LOG_DIR"
+up() { curl -fsS -o /dev/null --max-time 1 "$1" 2>/dev/null; }
+if ! up "http://127.0.0.1:${CORE_PORT}/health"; then
+  [ -x "$VENV_PY" ] && ( cd "$NOOK_DIR" && setsid "$VENV_PY" -m nook_core.server >"$LOG_DIR/core.log" 2>&1 </dev/null & )
+fi
+if ! up "$URL/"; then
+  ( cd "$NOOK_DIR" && setsid "$NODE" server.js >"$LOG_DIR/hub.log" 2>&1 </dev/null & )
+fi
+for _ in $(seq 1 40); do up "$URL/" && break; sleep 0.5; done
+exec "$CHROME" --app="$URL" --class=NookStudio >/dev/null 2>&1
+`;
+
+  const icon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <rect width="256" height="256" rx="56" fill="#121212"/>
+  <path d="M84 180 V76 L172 180 V76" fill="none" stroke="#3ECF8E" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+`;
+
+  const desktop = `[Desktop Entry]
+Type=Application
+Name=Nook Studio
+Comment=Workspace de IA do Diogo
+Exec=${launcherPath}
+Icon=${iconPath}
+Terminal=false
+Categories=Development;
+StartupWMClass=NookStudio
+StartupNotify=true
+`;
+
+  fs.writeFileSync(launcherPath, launcher);
+  fs.chmodSync(launcherPath, 0o755);
+  fs.writeFileSync(iconPath, icon);
+  fs.writeFileSync(desktopPath, desktop);
+  fs.chmodSync(desktopPath, 0o755);
+  const cp = require("child_process");
+  try { cp.execSync(`update-desktop-database ${JSON.stringify(appsDir)}`, { timeout: 5000, stdio: "ignore" }); } catch {}
+
+  // Ícone clicável na área de trabalho. xdg-user-dir resolve a pasta no locale
+  // certo (ex.: "Área de trabalho" em pt-BR); gio trusted evita o bloqueio do GNOME.
+  let desktopIconPath = null;
+  try {
+    let deskDir = "";
+    try { deskDir = cp.execSync("xdg-user-dir DESKTOP", { timeout: 3000 }).toString().trim(); } catch {}
+    if (!deskDir || !fs.existsSync(deskDir)) {
+      deskDir = [path.join(HOME, "Desktop"), path.join(HOME, "Área de trabalho")].find((d) => fs.existsSync(d)) || "";
+    }
+    if (deskDir && fs.existsSync(deskDir)) {
+      desktopIconPath = path.join(deskDir, "nook-studio.desktop");
+      fs.copyFileSync(desktopPath, desktopIconPath);
+      fs.chmodSync(desktopIconPath, 0o755);
+      try { cp.execSync(`gio set ${JSON.stringify(desktopIconPath)} metadata::trusted true`, { timeout: 3000, stdio: "ignore" }); } catch {}
+    }
+  } catch {}
+
+  return { ok: true, desktopPath, launcherPath, iconPath, desktopIconPath };
+}
+
 // ── File Browser (Code Mode) ──
 function listFiles(dirPath, res) {
   const safePath = path.resolve(dirPath);
@@ -4312,6 +4400,17 @@ const server = http.createServer({ requestTimeout: 0, headersTimeout: 0 }, (req,
       res.end(JSON.stringify({ error: e.message }));
     });
     return;
+  }
+
+  // Desktop shortcut
+  if (req.url === "/api/desktop/install" && req.method === "POST") {
+    try {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(installDesktopShortcut()));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify({ ok: false, error: e.message }));
+    }
   }
 
   // Ultra Plan endpoints
